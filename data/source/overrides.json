@@ -1,0 +1,18 @@
+{
+ "_note": "Team overrides, keyed by USDA PLANTS symbol. Any field set here replaces what the build pulls in. Use for preferred common names and reviewed story text.",
+ "HEPA19": {
+  "common": "Stiff Sunflower"
+ },
+ "HEOC2": {
+  "common": "Fewleaf Sunflower"
+ },
+ "LIPE2": {
+  "common": "Lewis Flax",
+  "scientific": "Linum lewisii",
+  "slug": "linum-lewisii"
+ },
+ "PUPA5": {
+  "common": "Pasqueflower",
+  "inat_name": "Pulsatilla nuttalliana"
+ }
+}

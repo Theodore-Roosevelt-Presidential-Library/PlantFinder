@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Embed the Plant Finder | Theodore Roosevelt Presidential Library</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap">
+<link rel="stylesheet" href="css/plantfinder.css">
+<script type="module" src="embed.js"></script>
+</head>
+<body>
+<header class="masthead"><div class="bar"><a class="brand" href="./"><span class="kicker">Theodore Roosevelt Presidential Library</span><span class="title">Plant <span>Finder</span> embeds</span></a></div></header>
+<main>
+<h1>Embed how-to</h1>
+<p class="lede">Each widget works on any page, including Drupal pages on trlibrary.com. Add the script tag once per page, then place any of the tags below. Widgets pull live data from plantfinder.labs.trlibrary.com, so they stay current as plants and photos are added.</p>
+
+<h2>1. Add the script once</h2>
+<pre class="code">&lt;script type="module" src="https://plantfinder.labs.trlibrary.com/embed.js"&gt;&lt;/script&gt;</pre>
+<p class="small">In Drupal, paste it into a Full HTML text block above the first widget. If the editor strips script tags, use the iframe versions at the bottom of this page.</p>
+
+<h2>2. A single plant</h2>
+<p>Use the plant's slug (its scientific name with dashes) or its USDA symbol. Slugs are in the address bar of each plant page.</p>
+<pre class="code">&lt;trpl-plant-card plant="liatris-punctata"&gt;&lt;/trpl-plant-card&gt;</pre>
+<div class="embed-demo"><trpl-plant-card plant="liatris-punctata"></trpl-plant-card></div>
+
+<h2>3. Plants in one area</h2>
+<p>Areas: <code>front-entry-rock-garden</code>, <code>site-plantings</code>, <code>roof-northwest</code>, <code>roof-southeast</code>, <code>stormwater-prairie</code>, <code>sun-rock-garden</code>, <code>shade-rock-garden</code>, <code>berm-faces</code>, <code>prairie-restoration</code>, <code>blufftop-prairie</code>, <code>native-lawn</code>, <code>living-fire-lane</code>. Optional: <code>type</code> (grass, sedge, wildflower, shrub, cactus-yucca), <code>limit</code>, <code>title</code>.</p>
+<pre class="code">&lt;trpl-plant-grid area="roof-northwest" type="wildflower" limit="8" title="Wildflowers on the green roof"&gt;&lt;/trpl-plant-grid&gt;</pre>
+<div class="embed-demo"><trpl-plant-grid area="roof-northwest" type="wildflower" limit="8" title="Wildflowers on the green roof"></trpl-plant-grid></div>
+
+<h2>4. Blooming now</h2>
+<p>Shows what usually blooms in the current month. Optional: <code>limit</code>, <code>month</code> (1 to 12) to pin a month.</p>
+<pre class="code">&lt;trpl-bloom-now limit="6"&gt;&lt;/trpl-bloom-now&gt;</pre>
+<div class="embed-demo"><trpl-bloom-now limit="6" month="7"></trpl-bloom-now></div>
+
+<h2>5. Grow-at-home zone check</h2>
+<pre class="code">&lt;trpl-zone-check&gt;&lt;/trpl-zone-check&gt;</pre>
+<div class="embed-demo"><trpl-zone-check></trpl-zone-check></div>
+
+<h2>Iframe versions</h2>
+<p>Any page of the Plant Finder can be framed without its header and footer by adding <code>?embed=1</code>.</p>
+<pre class="code">&lt;iframe src="https://plantfinder.labs.trlibrary.com/?embed=1#/bloom" title="Bloom clock" style="width:100%;height:900px;border:0"&gt;&lt;/iframe&gt;
+&lt;iframe src="https://plantfinder.labs.trlibrary.com/?embed=1#/places/roof-southeast" title="Southeast green roof plants" style="width:100%;height:900px;border:0"&gt;&lt;/iframe&gt;
+&lt;iframe src="https://plantfinder.labs.trlibrary.com/?embed=1#/plant/liatris-punctata" title="Dotted blazing star" style="width:100%;height:1400px;border:0"&gt;&lt;/iframe&gt;</pre>
+
+<h2>Styling</h2>
+<p>Widgets inherit the page's width. Set <code>--pf-min</code> on a grid to change the minimum card width, for example <code>&lt;trpl-plant-grid style="--pf-min:150px"&gt;</code>.</p>
+</main>
+</body>
+</html>

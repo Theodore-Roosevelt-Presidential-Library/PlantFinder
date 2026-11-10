@@ -1,0 +1,154 @@
+// PlantFinder embeds for trlibrary.com and partner sites.
+//   <script type="module" src="https://plantfinder.labs.trlibrary.com/embed.js"></script>
+//   <trpl-plant-card plant="liatris-punctata"></trpl-plant-card>
+//   <trpl-plant-grid area="roof-northwest" limit="8"></trpl-plant-grid>
+//   <trpl-bloom-now limit="6"></trpl-bloom-now>
+//   <trpl-zone-check></trpl-zone-check>
+import { TYPES, MONTH_NAMES, esc, flowerColor, heroImage, bloomRibbon, bloomText, silhouette, typeIcon, zoneNum, lookupZone } from "./js/viz.js";
+
+const BASE = new URL(".", import.meta.url).href;
+let dataPromise;
+function data() {
+  dataPromise ||= Promise.all([
+    fetch(BASE + "data/species.json").then((r) => r.json()),
+    fetch(BASE + "data/plantings.json").then((r) => r.json()),
+  ]).then(([species, areas]) => ({ species, areas }));
+  return dataPromise;
+}
+const src = (img) => (img?.src ? BASE + img.src : img?.url);
+const link = (sp) => `${BASE}#/plant/${sp.slug}`;
+
+const CSS = `
+:host { display: block; font-family: "Source Serif 4", Georgia, serif; color: #25282A; --forest: #1B4532; }
+* { box-sizing: border-box; }
+a { color: inherit; text-decoration: none; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--pf-min, 190px), 1fr)); gap: 14px; }
+.card { background: #fff; border: 1px solid #D9D3C4; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; transition: transform .15s ease; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(27,69,50,.14); }
+.pic { aspect-ratio: 4/3; background: #ECE8DE; display: grid; place-items: center; overflow: hidden; position: relative; }
+.pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pic img.ill { object-fit: contain; background: #fff; padding: 6px; }
+.body { padding: 10px 12px 12px; display: grid; gap: 4px; }
+.name { font-family: "Dharma Gothic E", Oswald, "Arial Narrow", sans-serif; text-transform: uppercase; font-size: 1.15rem; letter-spacing: .03em; color: var(--forest); line-height: 1.05; }
+.sci { font-style: italic; font-size: .85rem; color: #5D615F; }
+.head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 10px; flex-wrap: wrap; }
+.head h3 { font-family: "Dharma Gothic E", Oswald, sans-serif; text-transform: uppercase; color: var(--forest); margin: 0; font-size: 1.5rem; font-weight: 600; }
+.more { font-family: "Source Sans 3", sans-serif; font-size: .9rem; color: var(--forest); text-decoration: underline; }
+.wide { display: grid; grid-template-columns: 220px 1fr; gap: 16px; background: #fff; border: 1px solid #D9D3C4; border-radius: 10px; overflow: hidden; }
+.wide .pic { aspect-ratio: auto; height: 100%; min-height: 200px; }
+.wide .body { padding: 16px; }
+.facts { display: grid; grid-template-columns: minmax(0, 340px) 110px; gap: 16px; align-items: end; }
+.small { font-family: "Source Sans 3", sans-serif; font-size: .85rem; color: #5D615F; }
+@media (max-width: 560px) { .wide { grid-template-columns: 1fr; } .wide .pic { min-height: 180px; } }
+.zip { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+input { font: inherit; font-family: "Source Sans 3", sans-serif; width: 7.5rem; padding: 8px 10px; border: 2px solid #D9D3C4; border-radius: 8px; }
+button { font-family: Oswald, sans-serif; text-transform: uppercase; letter-spacing: .06em; background: #E7805D; color: #fff; border: 0; border-radius: 999px; padding: 9px 16px; cursor: pointer; font-size: 1rem; }
+.box { background: #fff; border: 1px solid #D9D3C4; border-radius: 10px; padding: 16px; }
+.out { margin-top: 10px; font-family: "Source Sans 3", sans-serif; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 2px; vertical-align: middle; }
+`;
+
+function fonts() {
+  if (document.getElementById("pf-fonts")) return;
+  const l = document.createElement("link");
+  l.id = "pf-fonts"; l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital@0;1&display=swap";
+  document.head.appendChild(l);
+}
+
+function card(sp) {
+  const img = heroImage(sp);
+  return `<a class="card" href="${link(sp)}" target="_top">
+    <div class="pic">${img ? `<img loading="lazy" alt="" src="${esc(src(img))}" class="${img.kind === "illustration" ? "ill" : ""}">` : typeIcon(sp.type, 48)}</div>
+    <div class="body"><div class="name">${esc(sp.common)}</div><div class="sci">${esc(sp.scientific)}</div>${bloomRibbon(sp, { width: 180, height: 20 })}</div></a>`;
+}
+
+class Base extends HTMLElement {
+  connectedCallback() {
+    fonts();
+    this.root ||= this.attachShadow({ mode: "open" });
+    this.root.innerHTML = `<style>${CSS}</style><div class="small">Loading plants…</div>`;
+    data().then((d) => this.render(d)).catch(() => { this.root.innerHTML = `<style>${CSS}</style><div class="small">Plants couldn't load.</div>`; });
+  }
+  set(html) { this.root.innerHTML = `<style>${CSS}</style>${html}`; }
+}
+
+// One plant, wide card with bloom ribbon and height
+class PlantCard extends Base {
+  render({ species, areas }) {
+    const key = (this.getAttribute("plant") || "").toLowerCase();
+    const sp = species.find((s) => s.slug === key || s.symbol.toLowerCase() === key || s.common.toLowerCase() === key);
+    if (!sp) return this.set(`<div class="small">Plant "${esc(key)}" not found.</div>`);
+    const img = heroImage(sp);
+    const where = sp.areas.map((a) => areas.find((x) => x.id === a.area)?.name).filter(Boolean);
+    this.set(`<a class="wide" href="${link(sp)}" target="_top">
+      <div class="pic">${img ? `<img alt="${esc(sp.common)}" src="${esc(src(img))}" class="${img.kind === "illustration" ? "ill" : ""}">` : typeIcon(sp.type, 64)}</div>
+      <div class="body">
+        <div class="name" style="font-size:1.6rem">${esc(sp.common)}</div>
+        <div class="sci">${esc(sp.scientific)} · ${esc(TYPES[sp.type]?.one || "")}</div>
+        <div class="facts"><div>${bloomRibbon(sp, { width: 260, height: 28 })}<div class="small">${esc(bloomText(sp))}</div></div><div>${silhouette(sp, { size: 110 })}</div></div>
+        ${where.length ? `<div class="small">At the Library: ${where.map(esc).join(", ")}</div>` : ""}
+        <span class="more">Explore this plant</span>
+      </div></a>`);
+  }
+}
+
+// A grid of plants, filtered by area, type or month
+class PlantGrid extends Base {
+  render({ species, areas }) {
+    const area = this.getAttribute("area");
+    const type = this.getAttribute("type");
+    const limit = +this.getAttribute("limit") || 0;
+    const title = this.getAttribute("title");
+    let list = species;
+    const a = area && areas.find((x) => x.id === area);
+    if (area) list = list.filter((s) => s.areas.some((x) => x.area === area));
+    if (type) list = list.filter((s) => s.type === type);
+    list = [...list].sort((x, y) => (x.images?.length ? 0 : 1) - (y.images?.length ? 0 : 1) || x.common.localeCompare(y.common));
+    const shown = limit ? list.slice(0, limit) : list;
+    const moreHref = area ? `${BASE}#/places/${area}` : BASE;
+    this.set(`<div class="head"><h3>${esc(title || a?.name || "Native plants at the Library")}</h3><a class="more" href="${moreHref}" target="_top">See all ${list.length}</a></div>
+      <div class="grid">${shown.map(card).join("")}</div>`);
+  }
+}
+
+// What is usually blooming this month
+class BloomNow extends Base {
+  render({ species }) {
+    const m = +this.getAttribute("month") || new Date().getMonth() + 1;
+    const limit = +this.getAttribute("limit") || 8;
+    const list = species.filter((s) => (s.bloom_months || []).includes(m) && s.traits?.flower_color)
+      .sort((a, b) => (b.images?.length ? 1 : 0) - (a.images?.length ? 1 : 0) || a.common.localeCompare(b.common));
+    if (!list.length) return this.set(`<div class="box"><div class="name">Winter at the Library</div><p class="small">The prairie is resting. Grasses and seed heads hold the color until spring.</p><a class="more" href="${BASE}#/bloom" target="_top">See the bloom clock</a></div>`);
+    this.set(`<div class="head"><h3>Blooming in ${MONTH_NAMES[m - 1]}</h3><a class="more" href="${BASE}#/bloom/${m}" target="_top">All ${list.length} on the bloom clock</a></div>
+      <div class="grid">${list.slice(0, limit).map(card).join("")}</div>`);
+  }
+}
+
+// ZIP code hardiness check against the Library's plants
+class ZoneCheck extends Base {
+  render({ species }) {
+    this.set(`<div class="box"><div class="name" style="font-size:1.4rem">Will these plants grow at your house?</div>
+      <p class="small">Enter your ZIP code to find your USDA hardiness zone.</p>
+      <div class="zip"><input inputmode="numeric" maxlength="5" placeholder="58645" aria-label="ZIP code"><button>Check</button></div><div class="out" aria-live="polite"></div></div>`);
+    const input = this.root.querySelector("input"), out = this.root.querySelector(".out");
+    const go = async () => {
+      const zip = input.value.trim();
+      if (!/^\d{5}$/.test(zip)) { out.textContent = "Enter a five-digit ZIP code."; return; }
+      try {
+        const z = await lookupZone(zip);
+        try { localStorage.setItem("pf-zone", JSON.stringify({ zip, ...z })); } catch {}
+        const ok = species.filter((s) => zoneNum(s.hardy_to_zone) == null || zoneNum(s.hardy_to_zone) <= zoneNum(z.zone));
+        out.innerHTML = `<b>Zone ${esc(z.zone)}.</b> ${ok.length} of the Library's ${species.length} native plants should survive your winters. <a class="more" href="${BASE}#/grow" target="_top">See which ones</a>`;
+      } catch { out.textContent = "We couldn't find that ZIP code."; }
+    };
+    this.root.querySelector("button").addEventListener("click", go);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+  }
+}
+
+const define = (n, c) => customElements.get(n) || customElements.define(n, c);
+define("trpl-plant-card", PlantCard);
+define("trpl-plant-grid", PlantGrid);
+define("trpl-bloom-now", BloomNow);
+define("trpl-zone-check", ZoneCheck);

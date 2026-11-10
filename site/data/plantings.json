@@ -1,0 +1,1104 @@
+[
+ {
+  "id": "front-entry-rock-garden",
+  "name": "Front Entry Rock Garden",
+  "kind": "schedule",
+  "source": "Front Entry Rock Garden Plant Schedule (sheet L520)",
+  "summary": "The garden that greets every visitor: a rock garden of Badlands wildflowers, sagebrush, cactus and low shrubs.",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "ACMI2",
+    "qty": 33
+   },
+   {
+    "symbol": "ALTE",
+    "qty": 10
+   },
+   {
+    "symbol": "ANRO2",
+    "qty": 34
+   },
+   {
+    "symbol": "ARUV",
+    "qty": 18
+   },
+   {
+    "symbol": "ARCA13",
+    "qty": 7
+   },
+   {
+    "symbol": "ARDR4",
+    "qty": 22
+   },
+   {
+    "symbol": "ARFR4",
+    "qty": 23
+   },
+   {
+    "symbol": "ARLU",
+    "qty": 18
+   },
+   {
+    "symbol": "ATCA2",
+    "qty": 6
+   },
+   {
+    "symbol": "CIUN",
+    "qty": 12
+   },
+   {
+    "symbol": "COSE16",
+    "qty": 1
+   },
+   {
+    "symbol": "CRCE",
+    "qty": 15
+   },
+   {
+    "symbol": "DAFR6",
+    "qty": 12
+   },
+   {
+    "symbol": "ERNA10",
+    "qty": 5
+   },
+   {
+    "symbol": "ERPA9",
+    "qty": 10
+   },
+   {
+    "symbol": "ESVI2",
+    "qty": 9
+   },
+   {
+    "symbol": "GETR",
+    "qty": 18
+   },
+   {
+    "symbol": "HEMA2",
+    "qty": 10
+   },
+   {
+    "symbol": "HYFI",
+    "qty": 18
+   },
+   {
+    "symbol": "JUCO6",
+    "qty": 9
+   },
+   {
+    "symbol": "JUHO2",
+    "qty": 17
+   },
+   {
+    "symbol": "KRLA2",
+    "qty": 17
+   },
+   {
+    "symbol": "LELU",
+    "qty": 15
+   },
+   {
+    "symbol": "LIPU",
+    "qty": 13
+   },
+   {
+    "symbol": "MEDE2",
+    "qty": 11
+   },
+   {
+    "symbol": "MOFI",
+    "qty": 13
+   },
+   {
+    "symbol": "OLAL2",
+    "qty": 11
+   },
+   {
+    "symbol": "OLRI",
+    "qty": 6
+   },
+   {
+    "symbol": "OPPO",
+    "qty": 20
+   },
+   {
+    "symbol": "PHHA",
+    "qty": 7
+   },
+   {
+    "symbol": "PHHO",
+    "qty": 27
+   },
+   {
+    "symbol": "PRPU3",
+    "qty": 12
+   },
+   {
+    "symbol": "RHTR",
+    "qty": 8
+   },
+   {
+    "symbol": "ROAR3",
+    "qty": 11
+   },
+   {
+    "symbol": "SOMI2",
+    "qty": 12
+   },
+   {
+    "symbol": "SOMO",
+    "qty": 11
+   },
+   {
+    "symbol": "SONE",
+    "qty": 10
+   },
+   {
+    "symbol": "STPI",
+    "qty": 5
+   },
+   {
+    "symbol": "SUMO",
+    "qty": 12
+   },
+   {
+    "symbol": "SYOC",
+    "qty": 6
+   },
+   {
+    "symbol": "TROC",
+    "qty": 14
+   },
+   {
+    "symbol": "YUGL",
+    "qty": 34
+   }
+  ]
+ },
+ {
+  "id": "site-plantings",
+  "name": "Site Plantings",
+  "kind": "schedule",
+  "source": "Site Container Plant Schedule (sheets L510.B through L510.I)",
+  "summary": "Shrubs, junipers and hardy wildflowers planted across the campus. Final plant locations are set in the field.",
+  "complete": false,
+  "members": [
+   {
+    "symbol": "ARCA13",
+    "qty": 28
+   },
+   {
+    "symbol": "ARFR4",
+    "qty": 531
+   },
+   {
+    "symbol": "ARLU",
+    "qty": 46
+   },
+   {
+    "symbol": "COSE16",
+    "qty": 18
+   },
+   {
+    "symbol": "CRCE",
+    "qty": 82
+   },
+   {
+    "symbol": "DAFR6",
+    "qty": 98
+   },
+   {
+    "symbol": "ERNA10",
+    "qty": 15
+   },
+   {
+    "symbol": "ERPA9",
+    "qty": 54
+   },
+   {
+    "symbol": "ESVI2",
+    "qty": 81
+   },
+   {
+    "symbol": "JUCO6",
+    "qty": 61
+   },
+   {
+    "symbol": "JUHO2",
+    "qty": 55
+   },
+   {
+    "symbol": "JUSC2",
+    "qty": 12
+   },
+   {
+    "symbol": "KRLA2",
+    "qty": 157
+   },
+   {
+    "symbol": "MEDE2",
+    "qty": 85
+   },
+   {
+    "symbol": "OPPO",
+    "qty": 34
+   },
+   {
+    "symbol": "PRAM",
+    "qty": 14
+   },
+   {
+    "symbol": "PRPU3",
+    "qty": 35
+   },
+   {
+    "symbol": "PRVI",
+    "qty": 9
+   },
+   {
+    "symbol": "RHTR",
+    "qty": 62
+   },
+   {
+    "symbol": "ROAR3",
+    "qty": 93
+   },
+   {
+    "symbol": "SHAR",
+    "qty": 29
+   },
+   {
+    "symbol": "STPI",
+    "qty": 16
+   }
+  ]
+ },
+ {
+  "id": "roof-northwest",
+  "name": "Northwest Green Roof",
+  "kind": "plug",
+  "source": "Plug Mixture Type 6: Vegetated Roof, Northwest Library Roof Mix",
+  "summary": "A living prairie on the Library's roof, planted to bloom from May through October.",
+  "sun": "Full sun",
+  "moisture": "Dry to dry-mesic, with periods of drought; drier than nearby natural prairie because of wind, slope and the northwest aspect",
+  "outcome": "Continuous native cover and good native plant diversity, with a complete season of bloom from May through October",
+  "management": "Hayed once a year, with all cut material removed",
+  "template": "Mixed Grass Restoration Seed Mix",
+  "facts": [
+   "5.7% slope, northwest aspect"
+  ],
+  "complete": true,
+  "members": [
+   {
+    "symbol": "BOCU",
+    "qty": null
+   },
+   {
+    "symbol": "BODA2",
+    "qty": null
+   },
+   {
+    "symbol": "BOGR2",
+    "qty": null
+   },
+   {
+    "symbol": "CAFI",
+    "qty": null
+   },
+   {
+    "symbol": "ELLA3",
+    "qty": null
+   },
+   {
+    "symbol": "HECO26",
+    "qty": null
+   },
+   {
+    "symbol": "SCSC",
+    "qty": null
+   },
+   {
+    "symbol": "ACMI2",
+    "qty": null
+   },
+   {
+    "symbol": "ANNE",
+    "qty": null
+   },
+   {
+    "symbol": "ARLU",
+    "qty": null
+   },
+   {
+    "symbol": "PUPA5",
+    "qty": null
+   },
+   {
+    "symbol": "COUM",
+    "qty": null
+   },
+   {
+    "symbol": "CRCE",
+    "qty": null
+   },
+   {
+    "symbol": "DACA7",
+    "qty": null
+   },
+   {
+    "symbol": "DAPU5",
+    "qty": null
+   },
+   {
+    "symbol": "HEVI4",
+    "qty": null
+   },
+   {
+    "symbol": "LIPU",
+    "qty": null
+   },
+   {
+    "symbol": "LIPE2",
+    "qty": null
+   },
+   {
+    "symbol": "MAPI",
+    "qty": null
+   },
+   {
+    "symbol": "OXLA3",
+    "qty": null
+   },
+   {
+    "symbol": "PEES",
+    "qty": null
+   },
+   {
+    "symbol": "PHHO",
+    "qty": null
+   },
+   {
+    "symbol": "PLPA2",
+    "qty": null
+   },
+   {
+    "symbol": "RACO3",
+    "qty": null
+   },
+   {
+    "symbol": "SPCO",
+    "qty": null
+   },
+   {
+    "symbol": "SYFA",
+    "qty": null
+   },
+   {
+    "symbol": "SYLA3",
+    "qty": null
+   },
+   {
+    "symbol": "SYOB",
+    "qty": null
+   },
+   {
+    "symbol": "TROC",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "roof-southeast",
+  "name": "Southeast Green Roof",
+  "kind": "plug",
+  "source": "Plug Mixture Type 7: Vegetated Roof, Southeast Library Roof Mix",
+  "summary": "The larger of the two roof prairies: the spec describes it as 100,000 square feet of rooftop.",
+  "sun": "Full sun",
+  "moisture": "Dry to dry-mesic, with periods of drought; likely drier than nearby natural prairie because of wind and the shallow soil layer",
+  "outcome": "Continuous native cover and good native plant diversity, with a complete season of bloom from May through October",
+  "management": "Hayed once a year, with all cut material removed",
+  "template": "Mixed Grass Restoration Seed Mix",
+  "facts": [
+   "11% slope, southeast aspect",
+   "100,000 sq ft of rooftop (per spec)"
+  ],
+  "complete": false,
+  "members": [
+   {
+    "symbol": "BOCU",
+    "qty": null
+   },
+   {
+    "symbol": "BODA2",
+    "qty": null
+   },
+   {
+    "symbol": "BOGR2",
+    "qty": null
+   },
+   {
+    "symbol": "CAIN9",
+    "qty": null
+   },
+   {
+    "symbol": "ELLA3",
+    "qty": null
+   },
+   {
+    "symbol": "HECO26",
+    "qty": null
+   },
+   {
+    "symbol": "PASM",
+    "qty": null
+   },
+   {
+    "symbol": "SCSC",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "stormwater-prairie",
+  "name": "Stormwater Prairie",
+  "kind": "plug",
+  "source": "Plug Mixture: Stormwater Mesic Prairie",
+  "summary": "Prairie plants in the large basins that catch rain from the parking lot and turnaround. Built to hold a 100-year storm.",
+  "sun": "Full sun to partial shade near the solar panels",
+  "moisture": "Dry-mesic to mesic; sometimes briefly flooded",
+  "outcome": "Nearly continuous, diverse native plant cover by the end of the second year",
+  "management": "Vegetation hand-removed at the end of the growing season; inspections and repairs after large storms",
+  "template": "North Slope Prairie Enhancement and Mixed Grass Prairie Restoration",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "CAST36",
+    "qty": null
+   },
+   {
+    "symbol": "CADU6",
+    "qty": null
+   },
+   {
+    "symbol": "CAPE6",
+    "qty": null
+   },
+   {
+    "symbol": "ELLA3",
+    "qty": null
+   },
+   {
+    "symbol": "HOJU",
+    "qty": null
+   },
+   {
+    "symbol": "NAVI4",
+    "qty": null
+   },
+   {
+    "symbol": "PASM",
+    "qty": null
+   },
+   {
+    "symbol": "POSE",
+    "qty": null
+   },
+   {
+    "symbol": "SPPE",
+    "qty": null
+   },
+   {
+    "symbol": "ACMI2",
+    "qty": null
+   },
+   {
+    "symbol": "ASCA11",
+    "qty": null
+   },
+   {
+    "symbol": "DACA7",
+    "qty": null
+   },
+   {
+    "symbol": "ECAN2",
+    "qty": null
+   },
+   {
+    "symbol": "GRSQ",
+    "qty": null
+   },
+   {
+    "symbol": "HEPA19",
+    "qty": null
+   },
+   {
+    "symbol": "HEVI4",
+    "qty": null
+   },
+   {
+    "symbol": "LIPU",
+    "qty": null
+   },
+   {
+    "symbol": "MOFI",
+    "qty": null
+   },
+   {
+    "symbol": "SYER",
+    "qty": null
+   },
+   {
+    "symbol": "SYOB",
+    "qty": null
+   },
+   {
+    "symbol": "THRH",
+    "qty": null
+   },
+   {
+    "symbol": "TROC",
+    "qty": null
+   },
+   {
+    "symbol": "VIAM",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "sun-rock-garden",
+  "name": "Sun Rock Garden",
+  "kind": "plug",
+  "source": "Plug Mixture Type 2: Sun Rock Garden",
+  "summary": "Grasses, wildflowers and shrubs growing in the rock-lined channels that carry water off parking lots and roads.",
+  "sun": "Full to partial sun, depending on the solar panel canopies",
+  "moisture": "Dry to dry-mesic",
+  "outcome": "Nearly continuous, diverse native plant cover by the end of the second year",
+  "management": "Vegetation hand-removed at the end of the growing season; inspections and repairs after large storms",
+  "template": "Mixed Grass Restoration",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "JUCO6",
+    "qty": null
+   },
+   {
+    "symbol": "KRLA2",
+    "qty": null
+   },
+   {
+    "symbol": "PRAM",
+    "qty": null
+   },
+   {
+    "symbol": "ROAR3",
+    "qty": null
+   },
+   {
+    "symbol": "ELLA3",
+    "qty": null
+   },
+   {
+    "symbol": "HECO26",
+    "qty": null
+   },
+   {
+    "symbol": "SCSC",
+    "qty": null
+   },
+   {
+    "symbol": "ACMI2",
+    "qty": null
+   },
+   {
+    "symbol": "ARLU",
+    "qty": null
+   },
+   {
+    "symbol": "GLLE3",
+    "qty": null
+   },
+   {
+    "symbol": "HEPA19",
+    "qty": null
+   },
+   {
+    "symbol": "LIPU",
+    "qty": null
+   },
+   {
+    "symbol": "RACO3",
+    "qty": null
+   },
+   {
+    "symbol": "SOMI2",
+    "qty": null
+   },
+   {
+    "symbol": "SOMO",
+    "qty": null
+   },
+   {
+    "symbol": "YUGL",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "shade-rock-garden",
+  "name": "Shade Rock Garden",
+  "kind": "plug",
+  "source": "Plug Mixture Type 3: Shade Rock Garden",
+  "summary": "Native shrubs, robust grasses and woodland wildflowers in the shaded rock channels.",
+  "sun": "Partial to full shade",
+  "outcome": "Dense groupings of native plants within the rock and gravel one year after planting",
+  "management": "Vegetation hand-removed at the end of the growing season; inspections and repairs after large storms",
+  "template": "Mixed Grass Restoration",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "AMAL2",
+    "qty": null
+   },
+   {
+    "symbol": "PRAM",
+    "qty": null
+   },
+   {
+    "symbol": "RHTR",
+    "qty": null
+   },
+   {
+    "symbol": "RIAU",
+    "qty": null
+   },
+   {
+    "symbol": "ROWO",
+    "qty": null
+   },
+   {
+    "symbol": "SYOC",
+    "qty": null
+   },
+   {
+    "symbol": "BOCU",
+    "qty": null
+   },
+   {
+    "symbol": "CASP7",
+    "qty": null
+   },
+   {
+    "symbol": "ELCA4",
+    "qty": null
+   },
+   {
+    "symbol": "ELVI3",
+    "qty": null
+   },
+   {
+    "symbol": "PIMI",
+    "qty": null
+   },
+   {
+    "symbol": "NAVI4",
+    "qty": null
+   },
+   {
+    "symbol": "PASM",
+    "qty": null
+   },
+   {
+    "symbol": "PSSP6",
+    "qty": null
+   },
+   {
+    "symbol": "SCSC",
+    "qty": null
+   },
+   {
+    "symbol": "GABO2",
+    "qty": null
+   },
+   {
+    "symbol": "MAST4",
+    "qty": null
+   },
+   {
+    "symbol": "THDA",
+    "qty": null
+   },
+   {
+    "symbol": "TROC",
+    "qty": null
+   },
+   {
+    "symbol": "VIAM",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "berm-faces",
+  "name": "Sun and Shade Berms",
+  "kind": "plug",
+  "source": "Plug Mixture Types 4 and 5: Sun and Shade Berm Faces",
+  "summary": "A low shrubland of creeping juniper, roses and berry shrubs holding the steep berm slopes in place.",
+  "sun": "Partial shade",
+  "moisture": "Dry to dry-mesic",
+  "outcome": "At least 95 percent shrub cover, with shrubs 6 inches to 6 feet tall",
+  "management": "Weeding in early summer; inspection and pruning each early spring",
+  "template": "USGS-NPS Creeping Juniper / Little Bluestem Dwarf-Shrubland",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "JUHO2",
+    "qty": null
+   },
+   {
+    "symbol": "ARFR4",
+    "qty": null
+   },
+   {
+    "symbol": "ROAR3",
+    "qty": null
+   },
+   {
+    "symbol": "DAFR6",
+    "qty": null
+   },
+   {
+    "symbol": "RHTR",
+    "qty": null
+   },
+   {
+    "symbol": "SYOC",
+    "qty": null
+   },
+   {
+    "symbol": "PRVI",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "prairie-restoration",
+  "name": "Mixed-Grass Prairie Restoration",
+  "kind": "seed",
+  "source": "Seed Mixture Type 1: Mixed Grass Restoration",
+  "summary": "Bare ground seeded back to a high-diversity mixed-grass prairie, with no trees or shrubs.",
+  "sun": "Full sun, level ground",
+  "moisture": "Dry to dry-mesic",
+  "outcome": "Nearly weed-free prairie by the end of the third year after seeding",
+  "management": "Grazed once a year to remove about half the growth, and burned every 5 to 10 years",
+  "template": "Western Wheatgrass / Blue Grama / Threadleaf Sedge",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "BOCU",
+    "qty": null
+   },
+   {
+    "symbol": "BOGR2",
+    "qty": null
+   },
+   {
+    "symbol": "CAIN9",
+    "qty": null
+   },
+   {
+    "symbol": "ELLA3",
+    "qty": null
+   },
+   {
+    "symbol": "HECO26",
+    "qty": null
+   },
+   {
+    "symbol": "PASM",
+    "qty": null
+   },
+   {
+    "symbol": "SCSC",
+    "qty": null
+   },
+   {
+    "symbol": "ACMI2",
+    "qty": null
+   },
+   {
+    "symbol": "ANNE",
+    "qty": null
+   },
+   {
+    "symbol": "ARLU",
+    "qty": null
+   },
+   {
+    "symbol": "PUPA5",
+    "qty": null
+   },
+   {
+    "symbol": "COUM",
+    "qty": null
+   },
+   {
+    "symbol": "DACA7",
+    "qty": null
+   },
+   {
+    "symbol": "DAPU5",
+    "qty": null
+   },
+   {
+    "symbol": "HEVI4",
+    "qty": null
+   },
+   {
+    "symbol": "LIPU",
+    "qty": null
+   },
+   {
+    "symbol": "LIPE2",
+    "qty": null
+   },
+   {
+    "symbol": "MAPI",
+    "qty": null
+   },
+   {
+    "symbol": "OXLA3",
+    "qty": null
+   },
+   {
+    "symbol": "PEES",
+    "qty": null
+   },
+   {
+    "symbol": "RACO3",
+    "qty": null
+   },
+   {
+    "symbol": "SOMI2",
+    "qty": null
+   },
+   {
+    "symbol": "SOMO",
+    "qty": null
+   },
+   {
+    "symbol": "SYFA",
+    "qty": null
+   },
+   {
+    "symbol": "SYLA3",
+    "qty": null
+   },
+   {
+    "symbol": "SYOB",
+    "qty": null
+   },
+   {
+    "symbol": "TROC",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "blufftop-prairie",
+  "name": "Blufftop Prairie",
+  "kind": "seed",
+  "source": "Seed Mixture Type 2: Mixed Grass Enhancement",
+  "summary": "Existing prairie on the level blufftops, overseeded to add more kinds of wildflowers and grasses.",
+  "sun": "Full sun, level ground",
+  "moisture": "Dry to dry-mesic",
+  "outcome": "More plant species by the end of the third year after seeding",
+  "management": "Grazed once a year to remove about half the growth, and burned every 5 to 10 years",
+  "template": "Western Wheatgrass / Blue Grama / Threadleaf Sedge",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "BOCU",
+    "qty": null
+   },
+   {
+    "symbol": "CAFI",
+    "qty": null
+   },
+   {
+    "symbol": "HECO26",
+    "qty": null
+   },
+   {
+    "symbol": "DACA7",
+    "qty": null
+   },
+   {
+    "symbol": "HEOC2",
+    "qty": null
+   },
+   {
+    "symbol": "HEVI4",
+    "qty": null
+   },
+   {
+    "symbol": "LIPU",
+    "qty": null
+   },
+   {
+    "symbol": "LIPE2",
+    "qty": null
+   },
+   {
+    "symbol": "MOFI",
+    "qty": null
+   },
+   {
+    "symbol": "OXLA3",
+    "qty": null
+   },
+   {
+    "symbol": "RACO3",
+    "qty": null
+   },
+   {
+    "symbol": "SPCO",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "native-lawn",
+  "name": "Native Lawn",
+  "kind": "seed",
+  "source": "Seed Mixture Type 3: Native Lawn",
+  "summary": "A lawn made entirely of native grasses and sedges, tough enough for walking and sitting.",
+  "sun": "Sunny",
+  "moisture": "Dry to dry-mesic; irrigated during drought",
+  "outcome": "Nearly continuous low grass and sedge cover that heals itself after minor damage",
+  "management": "Overseeded as needed; mowed if desired",
+  "template": "Grasses and sedges already growing on site, selected for resistance to grazing",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "ARPU9",
+    "qty": null
+   },
+   {
+    "symbol": "BOCU",
+    "qty": null
+   },
+   {
+    "symbol": "BODA2",
+    "qty": null
+   },
+   {
+    "symbol": "BOGR2",
+    "qty": null
+   },
+   {
+    "symbol": "CADU6",
+    "qty": null
+   },
+   {
+    "symbol": "CAFI",
+    "qty": null
+   },
+   {
+    "symbol": "KOMA",
+    "qty": null
+   },
+   {
+    "symbol": "MUCU3",
+    "qty": null
+   }
+  ]
+ },
+ {
+  "id": "living-fire-lane",
+  "name": "Living Fire Lane",
+  "kind": "seed",
+  "source": "Seed Mixture Type 4: Vegetated Permeable Pavement",
+  "summary": "Grasses and wildflowers growing through the reinforced fire lane, so the emergency route looks like prairie.",
+  "sun": "Sunny, shaded later in the day; north- to east-facing slopes",
+  "moisture": "Dry-mesic to mesic",
+  "template": "Little Bluestem / Grama Grass / Threadleaf Sedge",
+  "complete": true,
+  "members": [
+   {
+    "symbol": "BOCU",
+    "qty": null
+   },
+   {
+    "symbol": "BOGR2",
+    "qty": null
+   },
+   {
+    "symbol": "CAFI",
+    "qty": null
+   },
+   {
+    "symbol": "NAVI4",
+    "qty": null
+   },
+   {
+    "symbol": "SCSC",
+    "qty": null
+   },
+   {
+    "symbol": "CASE12",
+    "qty": null
+   },
+   {
+    "symbol": "DACA7",
+    "qty": null
+   },
+   {
+    "symbol": "ECAN2",
+    "qty": null
+   },
+   {
+    "symbol": "HEPA19",
+    "qty": null
+   },
+   {
+    "symbol": "HEVI4",
+    "qty": null
+   },
+   {
+    "symbol": "LIPU",
+    "qty": null
+   },
+   {
+    "symbol": "OXLA3",
+    "qty": null
+   },
+   {
+    "symbol": "PHHO",
+    "qty": null
+   },
+   {
+    "symbol": "SPCO",
+    "qty": null
+   },
+   {
+    "symbol": "SYER",
+    "qty": null
+   },
+   {
+    "symbol": "SYOB",
+    "qty": null
+   },
+   {
+    "symbol": "THRH",
+    "qty": null
+   },
+   {
+    "symbol": "TROC",
+    "qty": null
+   }
+  ]
+ }
+]

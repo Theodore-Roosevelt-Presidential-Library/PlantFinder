@@ -1,0 +1,7 @@
+{
+  "name": "plantfinder-zonemap",
+  "private": true,
+  "type": "module",
+  "description": "Builds site/data/zonemap.svg, the layered watercolor hardiness-zone map",
+  "dependencies": { "d3-geo": "^3.1.1", "topojson-client": "^3.1.0", "us-atlas": "^3.0.1" }
+}

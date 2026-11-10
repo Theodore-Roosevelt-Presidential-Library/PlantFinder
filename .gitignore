@@ -2,3 +2,7 @@
 .venv/
 __pycache__/
 .DS_Store
+scripts/zonemap/conus.tif
+scripts/zonemap/zones.geojson
+scripts/zonemap/node_modules/
+scripts/zonemap/package-lock.json

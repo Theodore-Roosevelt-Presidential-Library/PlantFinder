@@ -1,6 +1,6 @@
 import {
   MONTHS, MONTH_NAMES, TYPES, FLOWER, esc, flowerColor, heroImage, imgSrc, bloomRibbon, bloomText,
-  silhouette, fmtFeet, sunText, waterText, sunIcon, dropIcon, snowIcon, typeIcon, zoneNum, lookupZone, growVerdict, journalGlance,
+  silhouette, fmtFeet, sunText, waterText, sunIcon, dropIcon, snowIcon, typeIcon, zoneNum, lookupZone, growVerdict, journalGlance, renderZoneMap,
 } from "./viz.js";
 
 const params = new URLSearchParams(location.search);
@@ -240,9 +240,11 @@ function viewPlant(sp) {
   <h2>Find it at the Library</h2>
   <div class="area-list">${areas || `<p>Listed in the Library's planting plans.</p>`}</div>
 
-  <div class="two" style="margin-top:1rem">
+  <h2>Will it grow at your house?</h2>
+  <div class="grow-layout">
+    <div id="zonemap"></div>
     <section class="panel">
-      <h3>Grow it at home</h3>
+      <h3>Check your ZIP code</h3>
       <div class="zip"><label for="zip" class="small">Your ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" value="${esc(state.zone?.zip || "")}" placeholder="58645"><button class="btn" id="zipgo">Check</button></div>
       <div id="verdict" aria-live="polite"></div>
       <dl class="facts" style="margin-top:.9rem">
@@ -254,6 +256,8 @@ function viewPlant(sp) {
       </dl>
       ${sp.plant_guide ? `<p class="small"><a href="${esc(sp.plant_guide)}" target="_blank" rel="noopener">USDA plant guide (PDF)</a>${sp.fact_sheet ? ` · <a href="${esc(sp.fact_sheet)}" target="_blank" rel="noopener">Fact sheet</a>` : ""}</p>` : ""}
     </section>
+  </div>
+  <div style="margin-top:1rem">
     <section class="panel">
       <h3>In the wild</h3>
       <dl class="facts">
@@ -297,11 +301,13 @@ function viewPlant(sp) {
     const v = growVerdict(sp, z.zone);
     document.getElementById("verdict").innerHTML = `<div class="verdict ${v.ok === false ? "warn" : "ok"}">${esc(v.text)}</div>`;
   };
+  const drawMap = () => renderZoneMap(document.getElementById("zonemap"), { plant: sp, zone: state.zone });
+  drawMap();
   if (state.zone) showVerdict(state.zone);
   const go = async () => {
     const zip = document.getElementById("zip").value.trim();
     if (!/^\d{5}$/.test(zip)) { document.getElementById("verdict").innerHTML = `<div class="verdict warn">Enter a five-digit ZIP code.</div>`; return; }
-    try { const z = await lookupZone(zip); saveZone({ zip, ...z }); showVerdict(state.zone); }
+    try { const z = await lookupZone(zip); saveZone({ zip, ...z }); showVerdict(state.zone); drawMap(); }
     catch { document.getElementById("verdict").innerHTML = `<div class="verdict warn">We couldn't find that ZIP code.</div>`; }
   };
   document.getElementById("zipgo").addEventListener("click", go);
@@ -399,7 +405,10 @@ function viewGrow() {
   document.title = "Grow them at home | Plant Finder";
   $main.innerHTML = `<h1>Grow them at home</h1>
   <p class="lede">These are tough plants, built for wind, drought and North Dakota winters. Enter your ZIP code to find your USDA hardiness zone and see which of the Library's plants should survive your winters.</p>
-  <div class="panel"><div class="zip"><label for="zip">ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" value="${esc(state.zone?.zip || "")}" placeholder="58645"><button class="btn" id="go">Check my zone</button></div><div id="out" aria-live="polite"></div></div>
+  <div class="grow-layout">
+    <div id="zonemap"></div>
+    <div class="panel"><div class="zip"><label for="zip">ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" value="${esc(state.zone?.zip || "")}" placeholder="58645"><button class="btn" id="go">Check my zone</button></div><div id="out" aria-live="polite"></div></div>
+  </div>
   <div id="list"></div>
   <p class="credit">Zones from the 2023 USDA Plant Hardiness Zone Map via phzmapi.org. Plant cold limits from USDA PLANTS. Medora is zone 4a.</p>`;
   const show = (z) => {
@@ -409,11 +418,13 @@ function viewGrow() {
     document.getElementById("list").innerHTML = `<h2>Hardy in zone ${esc(z.zone)}</h2><div class="grid">${ok.sort((a, b) => a.common.localeCompare(b.common)).map(card).join("")}</div>` +
       (no.length ? `<h2>Too cold for these</h2><div class="grid">${no.map(card).join("")}</div>` : "");
   };
+  const drawMap = () => renderZoneMap(document.getElementById("zonemap"), { zone: state.zone });
+  drawMap();
   if (state.zone) show(state.zone);
   const go = async () => {
     const zip = document.getElementById("zip").value.trim();
     if (!/^\d{5}$/.test(zip)) return (document.getElementById("out").innerHTML = `<div class="verdict warn">Enter a five-digit ZIP code.</div>`);
-    try { const z = await lookupZone(zip); saveZone({ zip, ...z }); show(state.zone); }
+    try { const z = await lookupZone(zip); saveZone({ zip, ...z }); show(state.zone); drawMap(); }
     catch { document.getElementById("out").innerHTML = `<div class="verdict warn">We couldn't find that ZIP code.</div>`; }
   };
   document.getElementById("go").addEventListener("click", go);

@@ -225,3 +225,58 @@ export function journalGlance(sp, base = "") {
     ${t.flower_color ? `<div class="jn"><span class="jl">Flower</span>${blot(flowerColor(sp), 64, base)}<span class="jv">${esc(t.flower_color)}</span></div>` : ""}
   </section>`;
 }
+
+// ---------- Watercolor hardiness-zone map ----------
+// data/zonemap.svg holds one layer per half zone (<g id="zone-4a" class="zone">), drawn from
+// the 2023 USDA PHZM temperature grid. Layers are switched on per plant with CSS classes.
+const R = Math.PI / 180;
+export function albersUsa(lon, lat) {  // matches d3.geoAlbers().scale(1300).translate([487.5, 305])
+  const y0 = 29.5 * R, y1 = 45.5 * R, sy0 = Math.sin(y0), n = (sy0 + Math.sin(y1)) / 2;
+  const c = 1 + sy0 * (2 * n - sy0), r0 = Math.sqrt(c) / n;
+  const raw = (x, y) => { const r = Math.sqrt(c - 2 * n * Math.sin(y)) / n; x *= n; return [r * Math.sin(x), r0 - r * Math.cos(x)]; };
+  const k = 1300, [cx, cy] = raw(-0.6 * R, 38.7 * R), [x, y] = raw((lon + 96) * R, lat * R);
+  return [487.5 + k * (x - cx), 305 - k * (y - cy)];
+}
+const LOWER48 = (lat, lon) => lat > 24 && lat < 50 && lon > -125.5 && lon < -66;
+
+const svgCache = {};
+function loadZoneSvg(base) {
+  svgCache[base] ||= fetch(`${base}data/zonemap.svg`).then((r) => r.text());
+  return svgCache[base];
+}
+
+// opts: { plant, zone: {zone, zip, coordinates:{lat, lon}}, base, legend: true }
+export async function renderZoneMap(el, { plant = null, zone = null, base = "", legend = true } = {}) {
+  const svg = await loadZoneSvg(base);
+  const need = plant ? zoneNum(plant.hardy_to_zone) : null;
+  el.classList.add("zonemap");
+  el.classList.toggle("for-plant", !!plant);
+  el.innerHTML = `<div class="zm-frame">${svg}</div>`;
+  // pencil hatching for zones too cold for this plant
+  el.querySelector("defs")?.insertAdjacentHTML("beforeend", `<pattern id="zm-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(38)"><rect width="6" height="6" fill="#efe6d1"/><line x1="0" y1="0" x2="0" y2="6" stroke="#6d5537" stroke-width="1.1" stroke-opacity=".55"/></pattern>`);
+  const layers = [...el.querySelectorAll(".zone")];
+  for (const g of layers) {
+    const z = g.dataset.zone;
+    g.classList.toggle("ok", !plant || need == null || zoneNum(z) >= need);
+    g.classList.toggle("mine", !!zone && z === zone.zone);
+  }
+  const pins = el.querySelector(".pins");
+  const pin = (lon, lat, label, cls) => {
+    const [x, y] = albersUsa(lon, lat);
+    pins.insertAdjacentHTML("beforeend", `<g class="pin ${cls}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle r="8"/><circle r="2.8" class="dot"/><text x="13" y="6">${esc(label)}</text></g>`);
+  };
+  pin(-103.5244, 46.9139, "Medora", "medora");
+  const c = zone?.coordinates;
+  if (c && LOWER48(+c.lat, +c.lon)) pin(+c.lon, +c.lat, `You (${zone.zone})`, "you");
+  if (legend) {
+    const zs = layers.map((g) => g.dataset.zone);
+    el.insertAdjacentHTML("beforeend", `<div class="zm-legend" aria-hidden="true">${layers.map((g) =>
+      `<span class="zm-key${g.classList.contains("ok") ? " ok" : ""}${g.classList.contains("mine") ? " mine" : ""}">${blot(g.style.getPropertyValue("--zc"), 22, base)}<b>${g.dataset.zone}</b></span>`).join("")}</div>`);
+    void zs;
+  }
+  const caption = plant
+    ? (need == null ? `Cold limit not recorded for this plant. It grows wild in western North Dakota (Medora is zone 4a).` : `Painted zones are where ${plant.common.toLowerCase()} should survive the winter: zone ${plant.hardy_to_zone} and warmer. Pencil-hatched zones are too cold.`)
+    : `Hardiness zones of the lower 48 states. Each zone is 10°F of average winter low; a and b split it in half.`;
+  el.insertAdjacentHTML("beforeend", `<p class="zm-cap">${esc(caption)}${c && !LOWER48(+c.lat, +c.lon) ? " Your ZIP code is outside the lower 48, so it isn't pinned." : ""}</p>
+    <p class="zm-src">Drawn from the 2023 USDA Plant Hardiness Zone Map temperature data (PRISM Climate Group, Oregon State University; USDA-ARS), simplified and painted for this guide. This is not the official USDA Plant Hardiness Zone Map; see <a href="https://planthardiness.ars.usda.gov/" target="_blank" rel="noopener">planthardiness.ars.usda.gov</a>.</p>`);
+}

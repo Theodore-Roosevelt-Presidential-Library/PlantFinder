@@ -37,7 +37,7 @@ python3 scripts/download_images.py   # saves images to site/img/ and points the 
 Sources: USDA-NRCS PLANTS (names, traits, public-domain images including Britton & Brown 1913
 illustrations), iNaturalist (CC0 photos; flowering months from sightings within ~400 km of
 Medora), NPSpecies (Theodore Roosevelt National Park checklist), GBIF (range maps),
-2023 USDA Plant Hardiness Zone Map via phzmapi.org.
+2023 USDA Plant Hardiness Zone Map via phzmapi.org (ZIP lookup) and the PRISM temperature raster on USDA's Ag Data Commons (the watercolor zone map; see `scripts/zonemap/`).
 
 **Image rights:** only public-domain and CC0 images are used. Each image carries its credit,
 license and source, shown wherever it appears. Library photos from the Acquia DAM replace

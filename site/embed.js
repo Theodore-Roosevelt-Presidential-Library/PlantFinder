@@ -4,7 +4,7 @@
 //   <trpl-plant-grid area="roof-northwest" limit="8"></trpl-plant-grid>
 //   <trpl-bloom-now limit="6"></trpl-bloom-now>
 //   <trpl-zone-check></trpl-zone-check>
-import { TYPES, MONTH_NAMES, esc, flowerColor, heroImage, bloomRibbon, bloomText, silhouette, typeIcon, zoneNum, lookupZone, journalBloom, journalHeight } from "./js/viz.js";
+import { TYPES, MONTH_NAMES, esc, flowerColor, heroImage, bloomRibbon, bloomText, silhouette, typeIcon, zoneNum, lookupZone, journalBloom, journalHeight, renderZoneMap } from "./js/viz.js";
 
 const BASE = new URL(".", import.meta.url).href;
 let dataPromise;
@@ -60,6 +60,33 @@ button { font-family: Oswald, sans-serif; text-transform: uppercase; letter-spac
 .wc-note { font-style: italic; color: #6d5537; align-self: center; }
 .wc-ground { width: 100%; height: 6px; display: block; margin-top: -2px; }
 .wc-scale { display: flex; justify-content: space-around; font-size: .9rem; color: #6d5537; font-style: italic; }
+
+.zonemap { font-family: "IM Fell English", var(--serif); color: #3b2f22; }
+.zm-frame { position: relative; border-radius: 4px; padding: 2% 2% 1%;
+  background-color: #f3ead6;
+  background-image:
+    radial-gradient(ellipse at 20% 15%, rgba(255,255,255,.5), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(150,110,60,.12), transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .35  0 0 0 0 .2  0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  box-shadow: inset 0 0 40px rgba(140,100,40,.12), 0 8px 22px -14px rgba(70,50,20,.5); }
+.zonemap-svg { display: block; width: 100%; height: auto; }
+.zonemap-svg .zone path { fill: var(--zc); fill-opacity: .62; stroke: var(--zc); stroke-opacity: .5; stroke-width: .6; mix-blend-mode: multiply; transition: fill .3s, fill-opacity .3s; }
+.zonemap-svg .nation { fill: none; stroke: #4a3826; stroke-width: 1.3; stroke-linejoin: round; opacity: .85; }
+.zonemap-svg .states { fill: none; stroke: #5b4630; stroke-width: .55; stroke-linejoin: round; opacity: .55; }
+/* plant view: zones the plant survives keep their color; the rest fade to bare paper wash */
+.zonemap.for-plant .zone:not(.ok) path { fill: url(#zm-hatch); fill-opacity: 1; mix-blend-mode: normal; stroke: #6d5537; stroke-opacity: .35; }
+.zonemap.for-plant .zone.ok path { fill-opacity: .78; }
+.zonemap-svg .pin circle { fill: #fffdf6; stroke: #2b2118; stroke-width: 1.6; }
+.zonemap-svg .pin .dot { fill: #b8492f; stroke: none; }
+.zonemap-svg .pin.you .dot { fill: #1B4532; }
+.zonemap-svg .pin text { font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: 20px; fill: #2b2118; paint-order: stroke; stroke: #f3ead6; stroke-width: 4px; stroke-linejoin: round; }
+.zm-legend { display: flex; flex-wrap: wrap; gap: .25rem .6rem; margin: .6rem 0 .2rem; }
+.zm-key { display: inline-flex; align-items: center; gap: .25rem; font-size: .95rem; opacity: .9; }
+.zm-key b { font-weight: normal; }
+.for-plant .zm-key:not(.ok) { opacity: .3; filter: grayscale(.8); }
+.zm-key.mine b { text-decoration: underline; text-underline-offset: 3px; }
+.zm-cap { font-style: italic; margin: .4rem 0 .2rem; }
+.zm-src { font-family: 'Source Sans 3', sans-serif; font-size: .74rem; color: #5D615F; margin: 0; }
 
 .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 2px; vertical-align: middle; }
 `;
@@ -146,14 +173,21 @@ class ZoneCheck extends Base {
   render({ species }) {
     this.set(`<div class="box"><div class="name" style="font-size:1.4rem">Will these plants grow at your house?</div>
       <p class="small">Enter your ZIP code to find your USDA hardiness zone.</p>
-      <div class="zip"><input inputmode="numeric" maxlength="5" placeholder="58645" aria-label="ZIP code"><button>Check</button></div><div class="out" aria-live="polite"></div></div>`);
+      <div class="zip"><input inputmode="numeric" maxlength="5" placeholder="58645" aria-label="ZIP code"><button>Check</button></div><div class="out" aria-live="polite"></div>
+      ${this.hasAttribute("no-map") ? "" : `<div class="map" style="margin-top:12px"></div>`}</div>`);
     const input = this.root.querySelector("input"), out = this.root.querySelector(".out");
+    const mapEl = this.root.querySelector(".map");
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem("pf-zone")); } catch {}
+    if (saved?.zip) input.value = saved.zip;
+    if (mapEl) renderZoneMap(mapEl, { zone: saved, base: BASE, legend: false });
     const go = async () => {
       const zip = input.value.trim();
       if (!/^\d{5}$/.test(zip)) { out.textContent = "Enter a five-digit ZIP code."; return; }
       try {
         const z = await lookupZone(zip);
         try { localStorage.setItem("pf-zone", JSON.stringify({ zip, ...z })); } catch {}
+        if (mapEl) renderZoneMap(mapEl, { zone: { zip, ...z }, base: BASE, legend: false });
         const ok = species.filter((s) => zoneNum(s.hardy_to_zone) == null || zoneNum(s.hardy_to_zone) <= zoneNum(z.zone));
         out.innerHTML = `<b>Zone ${esc(z.zone)}.</b> ${ok.length} of the Library's ${species.length} native plants should survive your winters. <a class="more" href="${BASE}#/grow" target="_top">See which ones</a>`;
       } catch { out.textContent = "We couldn't find that ZIP code."; }

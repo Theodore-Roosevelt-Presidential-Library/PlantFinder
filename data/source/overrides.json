@@ -14,5 +14,26 @@
  "PUPA5": {
   "common": "Pasqueflower",
   "inat_name": "Pulsatilla nuttalliana"
+ },
+ "CRCE": {
+  "inat_name": "Oreocarya glomerata"
+ },
+ "MAPI": {
+  "inat_name": "Sideranthus spinulosus"
+ },
+ "LELU": {
+  "inat_name": "Physaria ludoviciana"
+ },
+ "CASE12": {
+  "inat_name": "Oenothera serrulata"
+ },
+ "OLRI": {
+  "inat_name": "Solidago rigida"
+ },
+ "OLAL2": {
+  "inat_name": "Solidago ptarmicoides"
+ },
+ "SPPE": {
+  "inat_name": "Sporobolus michauxianus"
  }
 }

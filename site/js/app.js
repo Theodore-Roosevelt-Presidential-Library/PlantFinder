@@ -6,7 +6,6 @@ import {
 const params = new URLSearchParams(location.search);
 const EMBED = params.has("embed");
 if (EMBED) document.body.classList.add("embed-mode");
-if (params.get("embed") === "bare") document.body.classList.add("bare");
 function tellParent(msg) {
   if (EMBED && window.parent !== window) window.parent.postMessage({ plantfinder: true, ...msg }, "*");
 }
@@ -55,7 +54,10 @@ function route() {
   window.scrollTo(0, 0);
   tellParent({ navigated: location.hash || "#/" });
   const v = view || "";
-  if (v === "plant" && state.bySlug[arg]) return viewPlant(state.bySlug[arg]);
+  if (v === "plant" && state.bySlug[arg]) {
+    try { sessionStorage.setItem("pf-last", arg); } catch {}
+    return viewPlant(state.bySlug[arg]);
+  }
   if (v === "places" && arg && state.areaById[arg]) return viewPlace(state.areaById[arg]);
   if (v === "places") return viewPlaces();
   if (v === "bloom") return viewBloom(arg);
@@ -169,6 +171,16 @@ function viewBrowse() {
   $main.querySelector("#reset").addEventListener("click", () => { state.filters = {}; saveFilters(); viewBrowse(); });
   $main.querySelector("#more").addEventListener("click", () => $main.querySelector(".filters").classList.toggle("collapsed"));
   draw();
+  // Coming back from a plant: return to that plant's card in the results
+  let last = null;
+  try { last = sessionStorage.getItem("pf-last"); sessionStorage.removeItem("pf-last"); } catch {}
+  const el = last && document.querySelector(`#grid a[href="#/plant/${last}"]`);
+  if (el) {
+    const y = el.getBoundingClientRect().top + window.scrollY - 20;
+    if (EMBED) setTimeout(() => tellParent({ scrollTo: y }), 50);
+    else window.scrollTo(0, y);
+    el.focus({ preventScroll: true });
+  }
 }
 
 // ---------- plant page ----------
@@ -221,7 +233,7 @@ function viewPlant(sp) {
   const others = (sp.other_common || []).filter((l) => l.toLowerCase() !== sp.common.toLowerCase());
 
   $main.innerHTML = `
-  <a class="back" href="#/">&larr; All plants</a>
+  <a class="back" href="#/">&larr; ${EMBED ? "Back to results" : "All plants"}</a>
   <article>
   <div class="plant-hero">
     <figure class="hero-figure">

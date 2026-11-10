@@ -257,8 +257,16 @@ def inat_nearby_count(taxon_id):
     return (d or {}).get("total_results", 0)
 
 
-def inat_cc0_photos(taxon_id, n=6):
-    """CC0 research-grade photos, flowering ones first, nearest to Medora first."""
+LICENSES = {
+    "cc0": ("CC0", "no rights reserved (CC0)", "https://creativecommons.org/publicdomain/zero/1.0/"),
+    # iNaturalist's CC BY licenses are version 4.0; the Library allows CC BY 4.0 only as a
+    # fallback, with the license linked in the caption.
+    "cc-by": ("CC BY 4.0", "CC BY 4.0", "https://creativecommons.org/licenses/by/4.0/"),
+}
+
+
+def inat_cc0_photos(taxon_id, n=6, license="cc0"):
+    """Research-grade photos under one license, flowering ones first, nearest to Medora first."""
     lat, lng = MEDORA
     photos, seen = [], set()
     flowering = "&term_id=12&term_value_id=13"
@@ -269,11 +277,11 @@ def inat_cc0_photos(taxon_id, n=6):
         ("", False),
     ]
     for extra, in_bloom in passes:
-        d = fetch(f"{INAT}/observations?taxon_id={taxon_id}&photo_license=cc0&quality_grade=research"
+        d = fetch(f"{INAT}/observations?taxon_id={taxon_id}&photo_license={license}&quality_grade=research"
                   f"&order_by=votes&per_page=20{extra}", inat=True)
         for o in (d or {}).get("results", []):
             for p in o.get("photos", [])[:1]:  # first photo of an observation is usually the best
-                if p.get("license_code") != "cc0" or p["id"] in seen:
+                if p.get("license_code") != license or p["id"] in seen:
                     continue
                 dims = p.get("original_dimensions") or {}
                 if dims and min(dims.get("width", 0), dims.get("height", 0)) < 700:
@@ -286,8 +294,9 @@ def inat_cc0_photos(taxon_id, n=6):
                     "in_bloom": in_bloom,
                     "url": p["url"].replace("square", "original"),
                     "fallback": p["url"].replace("square", "large"),
-                    "credit": f"{who}, no rights reserved (CC0)",
-                    "license": "CC0",
+                    "credit": f"{who}, {LICENSES[license][1]}",
+                    "license": LICENSES[license][0],
+                    "license_url": LICENSES[license][2],
                     "source": "iNaturalist",
                     "source_url": f"https://www.inaturalist.org/observations/{o['id']}",
                     "location": o.get("place_guess"),
@@ -408,7 +417,10 @@ def main():
         months, msrc = bloom_months(t.get("bloom_period"), flowering, wider, national)
         images = usda_images(imgs)
         if tx:
-            images += inat_cc0_photos(tx["id"])
+            cc0 = inat_cc0_photos(tx["id"])
+            images += cc0
+            if len(cc0) < 3:  # last resort: CC BY 4.0, credited with a linked license
+                images += inat_cc0_photos(tx["id"], n=4 - len(cc0), license="cc-by")
         common = title_case(prof.get("CommonName") or sci)
         rec = {
             "slug": slugify(sci),

@@ -47,9 +47,10 @@ button, input, select { font: inherit; color: inherit; }
 nav.tabs { margin-left: auto; display: flex; gap: .25rem; flex-wrap: wrap; }
 nav.tabs a { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; font-size: 1.05rem; color: #fff; text-decoration: none; padding: .35rem .7rem; border-radius: 999px; }
 nav.tabs a[aria-current="page"], nav.tabs a:hover { background: rgba(255,255,255,.14); color: #fff; }
-.embed-mode .site-foot { display: none; }
-.embed-mode.bare .masthead { display: none; }
-.embed-mode .masthead .brand .kicker { display: none; }
+.embed-mode .masthead, .embed-mode .site-foot, .embed-mode .intro { display: none; }
+.embed-mode main { padding-top: .5rem; }
+.embed-mode .filters { position: static; }
+.embed-mode .back { display: inline-block; font-size: 1rem; font-weight: 600; margin: .2rem 0 .4rem; }
 
 main { max-width: 1200px; margin: 0 auto; padding: 1.25rem; min-height: 60vh; }
 h1, h2, h3 { font-family: var(--display); text-transform: uppercase; letter-spacing: .03em; line-height: 1.05; font-weight: 600; color: var(--forest); }

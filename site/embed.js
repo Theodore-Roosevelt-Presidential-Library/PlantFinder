@@ -199,14 +199,14 @@ class ZoneCheck extends Base {
 
 // The whole Plant Finder (browse, plant pages, bloom clock, map) in a self-sizing frame.
 //   <trpl-plant-finder></trpl-plant-finder>
-//   <trpl-plant-finder start="#/bloom" bare></trpl-plant-finder>   (bare = no Plant Finder header)
+//   <trpl-plant-finder start="#/bloom"></trpl-plant-finder>
+// Opens on search, filters and results; a plant opens its details with "Back to results".
 class PlantFinder extends HTMLElement {
   connectedCallback() {
     if (this.frame) return;
     const start = this.getAttribute("start") || "#/";
-    const mode = this.hasAttribute("bare") ? "bare" : "1";
     const f = (this.frame = document.createElement("iframe"));
-    f.src = `${BASE}?embed=${mode}${start.startsWith("#") ? start : "#" + start}`;
+    f.src = `${BASE}?embed=1${start.startsWith("#") ? start : "#" + start}`;
     f.title = this.getAttribute("title") || "Plant Finder: native plants of the Theodore Roosevelt Presidential Library";
     f.loading = "lazy";
     f.allow = "camera; clipboard-write";
@@ -221,6 +221,9 @@ class PlantFinder extends HTMLElement {
         if (top < 0 || top > window.innerHeight) window.scrollBy({ top: top - 80, behavior: "smooth" });
       }
       if (e.data.navigated) this.navigated = true;
+      if (typeof e.data.scrollTo === "number") {
+        window.scrollTo({ top: this.getBoundingClientRect().top + window.scrollY + e.data.scrollTo - 80 });
+      }
     };
     window.addEventListener("message", this.onMsg);
   }

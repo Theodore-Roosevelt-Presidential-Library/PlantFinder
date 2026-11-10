@@ -29,6 +29,16 @@ a { color: inherit; text-decoration: none; }
 .pic { aspect-ratio: 4/3; background: #ECE8DE; display: grid; place-items: center; overflow: hidden; position: relative; }
 .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .pic img.ill { object-fit: contain; background: #fff; padding: 6px; }
+.pic.swipe { display: block; }
+.pic.swipe .track { position: absolute; inset: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.pic.swipe .track::-webkit-scrollbar { display: none; }
+.pic.swipe .track img { position: relative; inset: auto; flex: 0 0 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; }
+.pic .dots { position: absolute; left: 0; right: 0; bottom: 7px; display: flex; justify-content: center; gap: 5px; pointer-events: none; }
+.pic .dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.55); box-shadow: 0 0 2px rgba(0,0,0,.45); }
+.pic .dots i.on { background: #fff; transform: scale(1.25); }
+.pic .cnav { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.88); color: #1B4532; display: grid; place-items: center; font-size: 20px; line-height: 1; opacity: 0; transition: opacity .15s; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+.pic .cnav.prev { left: 6px; } .pic .cnav.next { right: 6px; }
+@media (hover: hover) { a:hover .pic .cnav { opacity: 1; } }
 .body { padding: 10px 12px 12px; display: grid; gap: 4px; }
 .name { font-family: "Dharma Gothic E", Oswald, "Arial Narrow", sans-serif; text-transform: uppercase; font-size: 1.15rem; letter-spacing: .03em; color: var(--forest); line-height: 1.05; }
 .sci { font-style: italic; font-size: .85rem; color: #5D615F; }
@@ -99,17 +109,45 @@ function fonts() {
   document.head.appendChild(l);
 }
 
+// Up to five photos you can swipe through (arrows on hover with a mouse).
+function pics(sp, { big = false, size = 48 } = {}) {
+  const imgs = sp.images || [];
+  const photos = imgs.filter((i) => i.kind !== "illustration").slice(0, 5);
+  const set = photos.length ? photos : imgs.slice(0, 1);
+  if (!set.length) return `<div class="pic">${typeIcon(sp.type, size)}</div>`;
+  const tag = (img, i) => `<img ${i || !big ? 'loading="lazy" ' : ""}alt="${i ? "" : esc(sp.common)}" src="${esc(big ? src(img) : thumb(img))}" class="${img.kind === "illustration" ? "ill" : ""}">`;
+  if (set.length === 1) return `<div class="pic">${tag(set[0], 0)}</div>`;
+  return `<div class="pic swipe"><div class="track">${set.map(tag).join("")}</div>
+    <span class="cnav prev" data-dir="-1" role="button" aria-label="Previous photo">‹</span><span class="cnav next" data-dir="1" role="button" aria-label="Next photo">›</span>
+    <span class="dots" aria-hidden="true">${set.map((_, i) => `<i${i ? "" : ' class="on"'}></i>`).join("")}</span></div>`;
+}
+function wireSwipes(root) {
+  root.addEventListener("scroll", (e) => {
+    const t = e.target;
+    if (!t.classList?.contains("track")) return;
+    const i = Math.round(t.scrollLeft / t.clientWidth);
+    t.parentElement.querySelectorAll(".dots i").forEach((d, k) => d.classList.toggle("on", k === i));
+  }, true);
+  root.addEventListener("click", (e) => {
+    const b = e.target.closest?.(".cnav");
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const t = b.parentElement.querySelector(".track");
+    const n = t.children.length, i = Math.round(t.scrollLeft / t.clientWidth);
+    t.scrollTo({ left: ((i + +b.dataset.dir + n) % n) * t.clientWidth, behavior: "smooth" });
+  }, true);
+}
+
 function card(sp) {
-  const img = heroImage(sp);
   return `<a class="card" href="${link(sp)}" target="_top">
-    <div class="pic">${img ? `<img loading="lazy" alt="" src="${esc(thumb(img))}" class="${img.kind === "illustration" ? "ill" : ""}">` : typeIcon(sp.type, 48)}</div>
+    ${pics(sp)}
     <div class="body"><div class="name">${esc(sp.common)}</div><div class="sci">${esc(sp.scientific)}</div>${bloomRibbon(sp, { width: 180, height: 20 })}</div></a>`;
 }
 
 class Base extends HTMLElement {
   connectedCallback() {
     fonts();
-    this.root ||= this.attachShadow({ mode: "open" });
+    if (!this.root) { this.root = this.attachShadow({ mode: "open" }); wireSwipes(this.root); }
     this.root.innerHTML = `<style>${CSS}</style><div class="small">Loading plants…</div>`;
     data().then((d) => this.render(d)).catch(() => { this.root.innerHTML = `<style>${CSS}</style><div class="small">Plants couldn't load.</div>`; });
   }
@@ -122,10 +160,9 @@ class PlantCard extends Base {
     const key = (this.getAttribute("plant") || "").toLowerCase();
     const sp = species.find((s) => s.slug === key || s.symbol.toLowerCase() === key || s.common.toLowerCase() === key);
     if (!sp) return this.set(`<div class="small">Plant "${esc(key)}" not found.</div>`);
-    const img = heroImage(sp);
     const where = sp.areas.map((a) => areas.find((x) => x.id === a.area)?.name).filter(Boolean);
     this.set(`<a class="wide" href="${link(sp)}" target="_top">
-      <div class="pic">${img ? `<img alt="${esc(sp.common)}" src="${esc(src(img))}" class="${img.kind === "illustration" ? "ill" : ""}">` : typeIcon(sp.type, 64)}</div>
+      ${pics(sp, { big: true, size: 64 })}
       <div class="body">
         <div class="name" style="font-size:1.6rem">${esc(sp.common)}</div>
         <div class="sci">${esc(sp.scientific)} · ${esc(TYPES[sp.type]?.one || "")}</div>
@@ -217,11 +254,16 @@ class PlantFinder extends HTMLElement {
       if (e.source !== f.contentWindow || !e.data?.plantfinder) return;
       if (e.data.height) f.style.height = `${Math.ceil(e.data.height) + 4}px`;
       if (e.data.navigated && this.navigated) {
-        const top = this.getBoundingClientRect().top;
-        if (top < 0 || top > window.innerHeight) window.scrollBy({ top: top - 80, behavior: "smooth" });
+        // Instant, and repeated once layout settles: iOS Safari drops smooth or mid-swipe scrolls.
+        const jump = () => {
+          const top = this.getBoundingClientRect().top;
+          if (top < 0 || top > window.innerHeight) window.scrollBy(0, top - 80);
+        };
+        jump(); clearTimeout(this.jumpTimer); this.jumpTimer = setTimeout(jump, 150);
       }
       if (e.data.navigated) this.navigated = true;
       if (typeof e.data.scrollTo === "number") {
+        clearTimeout(this.jumpTimer);
         window.scrollTo({ top: this.getBoundingClientRect().top + window.scrollY + e.data.scrollTo - 80 });
       }
     };

@@ -75,3 +75,12 @@ cd site && python3 -m http.server 8000   # then open http://localhost:8000
 `.github/workflows/pages.yml` publishes `site/` to GitHub Pages on every push to `main`.
 `site/CNAME` sets the custom domain; add a CNAME record for `plantfinder.labs` pointing to
 `theodore-roosevelt-presidential-library.github.io`, and set Pages to deploy from GitHub Actions.
+
+## Scroll study
+
+`scripts/ux/scroll_study.py` taps through every interaction (open a plant, back to results, swipe card photos, filters, bloom clock months and wheel, planting areas, the identify wizard) in WebKit on an iPhone and in desktop Chrome, standalone and embedded, and checks where the page lands. Run it after any change to navigation or layout:
+
+    python3 -m http.server 8765 --directory site &
+    python3 scripts/ux/scroll_study.py
+
+It writes `scripts/ux/scroll_study.md`. Needs `pip install playwright` and `python3 -m playwright install webkit chromium`.

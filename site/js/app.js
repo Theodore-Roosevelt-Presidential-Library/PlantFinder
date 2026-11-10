@@ -1,6 +1,6 @@
 import {
   MONTHS, MONTH_NAMES, TYPES, FLOWER, esc, flowerColor, heroImage, imgSrc, bloomRibbon, bloomText,
-  silhouette, fmtFeet, sunText, waterText, sunIcon, dropIcon, snowIcon, typeIcon, zoneNum, lookupZone, growVerdict, journalGlance, renderZoneMap,
+  silhouette, fmtFeet, sunText, waterText, sunIcon, dropIcon, snowIcon, typeIcon, zoneNum, lookupZone, growVerdict, journalGlance, renderZoneMap, blot,
 } from "./viz.js";
 
 const params = new URLSearchParams(location.search);
@@ -49,11 +49,32 @@ function setNav(name) {
   document.querySelectorAll("nav.tabs a").forEach((a) => { if (a.dataset.nav === name) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
 }
 
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+let restoring = false;
+// iOS Safari ignores a scroll made during momentum scrolling or before the new view
+// has laid out, so jump to the top now and again after the next frames.
+function toTop() {
+  const go = () => { if (restoring) return; window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; };
+  go();
+  requestAnimationFrame(() => requestAnimationFrame(go));
+  setTimeout(go, 120);
+  setTimeout(go, 350);
+}
+
+let lastView = null;
 function route() {
   const [, view, arg] = (location.hash || "#/").split("/");
-  window.scrollTo(0, 0);
-  tellParent({ navigated: location.hash || "#/" });
   const v = view || "";
+  const prev = lastView;
+  lastView = v;
+  restoring = false;
+  tellParent({ navigated: location.hash || "#/" });
+  // Changing months on the bloom clock: go to that month's list, not the top of the page.
+  if (v === "bloom" && prev === "bloom") {
+    viewBloom(arg);
+    return showBloomResults();
+  }
+  toTop();
   if (v === "plant" && state.bySlug[arg]) {
     try { sessionStorage.setItem("pf-last", arg); } catch {}
     return viewPlant(state.bySlug[arg]);
@@ -68,13 +89,36 @@ function route() {
 }
 
 // ---------- cards ----------
+// Card photos: swipe (or use the arrows on desktop) through up to five photos.
+function cardPics(sp) {
+  const imgs = sp.images || [];
+  const photos = imgs.filter((i) => i.kind !== "illustration").slice(0, 5);
+  const set = photos.length ? photos : imgs.slice(0, 1);
+  if (!set.length) return `<div class="pic"><div class="noimg">${typeIcon(sp.type, 54)}</div></div>`;
+  const tag = (img, i) => `<img ${i ? 'loading="lazy" ' : ""}src="${esc(img.thumb || imgSrc(img))}" alt="${i ? "" : esc(sp.common)}" class="${img.kind === "illustration" ? "ill" : ""}">`;
+  if (set.length === 1) return `<div class="pic">${tag(set[0], 0)}</div>`;
+  return `<div class="pic swipe"><div class="track" tabindex="-1">${set.map(tag).join("")}</div>
+    <span class="cnav prev" data-dir="-1" role="button" aria-label="Previous photo">‹</span><span class="cnav next" data-dir="1" role="button" aria-label="Next photo">›</span>
+    <span class="dots" aria-hidden="true">${set.map((_, i) => `<i${i ? "" : ' class="on"'}></i>`).join("")}</span></div>`;
+}
+document.addEventListener("scroll", (e) => {
+  const t = e.target;
+  if (!(t instanceof Element) || !t.classList.contains("track")) return;
+  const i = Math.round(t.scrollLeft / t.clientWidth);
+  t.parentElement.querySelectorAll(".dots i").forEach((d, k) => d.classList.toggle("on", k === i));
+}, true);
+document.addEventListener("click", (e) => {
+  const b = e.target.closest?.(".cnav");
+  if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const t = b.parentElement.querySelector(".track");
+  const n = t.children.length, i = Math.round(t.scrollLeft / t.clientWidth);
+  t.scrollTo({ left: ((i + +b.dataset.dir + n) % n) * t.clientWidth, behavior: "smooth" });
+}, true);
+
 function card(sp) {
-  const img = heroImage(sp);
-  const pic = img
-    ? `<img loading="lazy" src="${esc(img.thumb || imgSrc(img))}" alt="" class="${img.kind === "illustration" ? "ill" : ""}">`
-    : `<div class="noimg">${typeIcon(sp.type, 54)}</div>`;
   return `<a class="card" href="#/plant/${sp.slug}">
-    <div class="pic">${pic}</div>
+    ${cardPics(sp)}
     <div class="body">
       <div class="name">${esc(sp.common)}</div>
       <div class="sci">${esc(sp.scientific)}</div>
@@ -176,6 +220,7 @@ function viewBrowse() {
   try { last = sessionStorage.getItem("pf-last"); sessionStorage.removeItem("pf-last"); } catch {}
   const el = last && document.querySelector(`#grid a[href="#/plant/${last}"]`);
   if (el) {
+    restoring = true;
     const y = el.getBoundingClientRect().top + window.scrollY - 20;
     if (EMBED) setTimeout(() => tellParent({ scrollTo: y }), 50);
     else window.scrollTo(0, y);
@@ -412,12 +457,26 @@ function viewBloom(arg) {
     <div>${wheel(m)}</div>
     <div>
       <div class="month-tabs">${MONTHS.map((x, i) => `<a class="chip" href="#/bloom/${i + 1}" aria-pressed="${i + 1 === m}">${x}</a>`).join("")}</div>
-      <h2 style="margin-top:0">${MONTH_NAMES[m - 1]}: ${list.length} plants</h2>
+      <h2 class="bloom-results" style="margin-top:0;scroll-margin-top:12px">${MONTH_NAMES[m - 1]}: ${list.length} plants</h2>
       <div class="grid">${list.map(card).join("") || `<div class="empty">Winter rest. The grasses and seed heads carry the prairie's color now.</div>`}</div>
     </div>
   </div>
   <p class="credit">Bloom months come from iNaturalist sightings marked "flowering" within about 250 miles of Medora where there are enough of them, and from USDA PLANTS bloom periods otherwise.</p>`;
   $main.querySelectorAll(".wedge").forEach((w) => w.addEventListener("click", (e) => { if (!e.target.closest("a")) location.hash = `#/bloom/${w.dataset.m}`; }));
+}
+
+function showBloomResults() {
+  const h = $main.querySelector(".bloom-results");
+  if (!h) return;
+  restoring = true;
+  const place = () => {
+    const r = h.getBoundingClientRect();
+    if (EMBED) { tellParent({ scrollTo: r.top + window.scrollY - 10 }); return; }
+    // Only move when the list heading is off screen (phones, where the list sits under the wheel).
+    if (r.top < 0 || r.top > window.innerHeight * 0.6) window.scrollTo(0, r.top + window.scrollY - 12);
+  };
+  requestAnimationFrame(() => requestAnimationFrame(place));
+  setTimeout(place, 200);
 }
 
 // ---------- grow ----------
@@ -460,65 +519,96 @@ function viewIdentify() {
   setNav("identify");
   document.title = "What is this plant? | Plant Finder";
   const endpoint = window.PLANTFINDER_ID_ENDPOINT;
-  const k = { type: "", color: "", month: new Date().getMonth() + 1, height: "" };
+  const k = { type: "", color: "", height: "", month: "" };
   const colors = [...new Set(state.species.map((s) => s.traits?.flower_color).filter(Boolean))].sort();
-  $main.innerHTML = `<h1>What is this plant?</h1>
-  <p class="lede">Looking at something growing at the Library? Answer a few questions and we'll narrow it down.</p>
-  <div class="two">
-    <div class="id-steps">
-      <div class="id-step"><h3>1. What kind of plant?</h3><div class="row" id="k-type">${Object.entries(TYPES).map(([key, t]) => `<button class="chip" data-v="${key}">${typeIcon(key, 16)}${t.one}</button>`).join(" ")}</div></div>
-      <div class="id-step"><h3>2. Flower color</h3><div id="k-color">${colors.map((c) => `<button class="chip" data-v="${c}"><span class="dot" style="background:${FLOWER[c]}"></span>${c}</button>`).join(" ")} <button class="chip" data-v="">Not flowering</button></div></div>
-      <div class="id-step"><h3>3. About how tall?</h3><div id="k-height"><button class="chip" data-v="ankle">Ankle high</button> <button class="chip" data-v="knee">Knee high</button> <button class="chip" data-v="waist">Waist high</button> <button class="chip" data-v="tall">Taller than me</button></div></div>
-      <div class="id-step"><h3>4. When?</h3><select class="sel" id="k-month">${MONTH_NAMES.map((m, i) => `<option value="${i + 1}" ${i + 1 === k.month ? "selected" : ""}>${m}</option>`).join("")}</select></div>
-      <div class="id-step"><h3>Or take a photo</h3>
-        <div class="camera"><input type="file" accept="image/*" capture="environment" id="photo" class="sr-only"><label for="photo" class="btn">Use camera</label><div id="photo-out" class="small">${endpoint ? "Photos are sent for identification and not stored." : "Photo identification is coming soon. Use the questions above for now."}</div></div>
-      </div>
-    </div>
-    <div><h2 style="margin-top:0">Best matches</h2><div id="k-out" class="grid"></div></div>
-  </div>`;
   const hRange = { ankle: [0, 0.8], knee: [0.6, 2], waist: [1.5, 4], tall: [4, 100] };
-  const draw = () => {
+  const ART = { grass: "grass", sedge: "sedge", wildflower: "wildflower", shrub: "shrub", "cactus-yucca": "cactus" };
+  const steps = [
+    { key: "type", q: "What kind of plant is it?", opts: Object.entries(TYPES).map(([v, t]) => ({ v, label: t.one, art: `<img src="art/${ART[v]}.webp" alt="">` })) },
+    { key: "color", q: "What color are the flowers?", opts: colors.map((c) => ({ v: c, label: c, art: blot(FLOWER[c], 54) })).concat([{ v: "none", label: "No flowers", art: `<span class="id-none">–</span>` }]) },
+    { key: "height", q: "About how tall is it?", opts: [["ankle", "Ankle high", 0.12], ["knee", "Knee high", 0.3], ["waist", "Waist high", 0.55], ["tall", "Taller than me", 1.05]].map(([v, label, h]) => ({ v, label, art: `<span class="id-ht"><img src="art/person.webp" alt=""><i style="bottom:${Math.min(h, 1) * 100}%"></i></span>` })) },
+    { key: "month", q: "When did you see it?", opts: MONTHS.map((m, i) => ({ v: String(i + 1), label: m, small: true })) },
+  ];
+  let step = 0;
+
+  $main.innerHTML = `<div class="id-wrap">
+    <section class="id-card" aria-label="Identify a plant">
+      <div class="id-top">
+        <h1>What is this plant?</h1>
+        ${endpoint ? `<label class="btn ghost id-cam"><input type="file" accept="image/*" capture="environment" id="photo" class="sr-only">Use a photo</label>` : ""}
+      </div>
+      <ol class="id-steps" aria-label="Questions"></ol>
+      <div class="id-body" aria-live="polite"></div>
+      <div class="id-foot"><button class="chip" id="id-back">Back</button><button class="chip" id="id-skip">Skip</button><button class="chip" id="id-reset">Start over</button></div>
+      <div id="photo-out" class="small"></div>
+    </section>
+    <section class="id-results"><div class="id-count" id="k-count"></div><div id="k-out" class="grid"></div></section>
+  </div>`;
+
+  const label = (s) => {
+    const val = k[s.key];
+    if (!val) return "";
+    return s.opts.find((o) => o.v === val)?.label || "";
+  };
+  const drawSteps = () => {
+    document.querySelector(".id-steps").innerHTML = steps.map((s, i) =>
+      `<li><button class="id-step-btn${i === step ? " on" : ""}${k[s.key] ? " done" : ""}" data-i="${i}"><b>${i + 1}</b><span>${["Kind", "Color", "Height", "Month"][i]}</span><em>${esc(label(s))}</em></button></li>`).join("");
+    document.querySelectorAll(".id-step-btn").forEach((b) => b.addEventListener("click", () => { step = +b.dataset.i; render(); }));
+  };
+  const drawBody = () => {
+    const s = steps[step];
+    document.querySelector(".id-body").innerHTML = `<h2 class="id-q">${s.q}</h2>
+      <div class="id-opts${s.opts[0].small ? " small" : s.opts.length === 4 ? " four" : ""}">${s.opts.map((o) =>
+        `<button class="id-opt" data-v="${o.v}" aria-pressed="${k[s.key] === o.v}">${o.art || ""}<span>${esc(o.label)}</span></button>`).join("")}</div>`;
+    document.querySelectorAll(".id-opt").forEach((b) => b.addEventListener("click", () => {
+      k[s.key] = k[s.key] === b.dataset.v ? "" : b.dataset.v;
+      if (k[s.key] && step < steps.length - 1) step++;
+      render();
+    }));
+    document.getElementById("id-back").disabled = step === 0;
+    document.getElementById("id-skip").textContent = step === steps.length - 1 ? "Done" : "Skip";
+  };
+  const drawResults = () => {
+    const picked = !!(k.type || k.color || k.height || k.month);
     const scored = state.species.map((s) => {
       let sc = 0;
-      if (k.type) sc += s.type === k.type ? 3 : -3;
-      if (k.color) sc += s.traits?.flower_color === k.color ? 3 : (s.traits?.flower_color ? -2 : 0);
-      if ((s.bloom_months || []).includes(+k.month)) sc += k.color ? 2 : 0;
-      else if (k.color) sc -= 2;
+      if (k.type) sc += s.type === k.type || (k.type === "grass" && s.type === "sedge") ? 3 : -4;
+      if (k.color === "none") sc += s.traits?.flower_color ? 0 : 1;
+      else if (k.color) sc += s.traits?.flower_color === k.color ? 3 : -3;
+      if (k.month && k.color !== "none") sc += (s.bloom_months || []).includes(+k.month) ? 2 : -2;
       if (k.height && s.traits?.height_ft != null) {
         const [lo, hi] = hRange[k.height];
         sc += s.traits.height_ft >= lo && s.traits.height_ft <= hi ? 2 : -1;
       }
       return [sc, s];
-    }).filter(([sc]) => sc > 0).sort((a, b) => b[0] - a[0]).slice(0, 12);
-    document.getElementById("k-out").innerHTML = scored.map(([, s]) => card(s)).join("") || `<div class="empty">Pick an answer or two to see matches.</div>`;
+    }).filter(([sc]) => sc > 0).sort((a, b) => b[0] - a[0] || a[1].common.localeCompare(b[1].common));
+    document.getElementById("k-count").innerHTML = picked
+      ? `<b>${scored.length}</b> ${scored.length === 1 ? "plant matches" : "plants match"}${scored.length > 12 ? "; the best 12 are shown" : ""}`
+      : `Answer a question or two and the matches appear here.`;
+    document.getElementById("k-out").innerHTML = picked ? (scored.slice(0, 12).map(([, s]) => card(s)).join("") || `<div class="empty">No plants match. Try changing an answer.</div>`) : "";
   };
-  const wire = (id, key) => document.querySelectorAll(`#${id} [data-v]`).forEach((b) => b.addEventListener("click", () => {
-    const on = b.getAttribute("aria-pressed") === "true";
-    document.querySelectorAll(`#${id} [data-v]`).forEach((x) => x.setAttribute("aria-pressed", "false"));
-    if (!on) b.setAttribute("aria-pressed", "true");
-    k[key] = on ? "" : b.dataset.v;
-    draw();
-  }));
-  wire("k-type", "type"); wire("k-color", "color"); wire("k-height", "height");
-  document.getElementById("k-month").addEventListener("change", (e) => { k.month = e.target.value; draw(); });
-  document.getElementById("photo").addEventListener("change", async (e) => {
+  const render = () => { drawSteps(); drawBody(); drawResults(); };
+  document.getElementById("id-back").addEventListener("click", () => { if (step > 0) { step--; render(); } });
+  document.getElementById("id-skip").addEventListener("click", () => {
+    if (step < steps.length - 1) { step++; render(); }
+    else document.querySelector(".id-results").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  document.getElementById("id-reset").addEventListener("click", () => { Object.assign(k, { type: "", color: "", height: "", month: "" }); step = 0; render(); });
+  document.getElementById("photo")?.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const out = document.getElementById("photo-out");
-    out.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Your photo">`;
-    if (!endpoint) { out.innerHTML += `<p>Photo identification is coming soon. Use the questions above for now.</p>`; return; }
-    out.innerHTML += `<p>Identifying…</p>`;
+    out.innerHTML = `<p>Identifying your photo…</p>`;
     try {
       const fd = new FormData(); fd.append("image", file);
-      const r = await fetch(endpoint, { method: "POST", body: fd });
-      const res = await r.json(); // [{symbol, score}] limited to the Library's species, plus optional outside suggestion
+      const res = await (await fetch(endpoint, { method: "POST", body: fd })).json();
       const hits = (res.matches || []).map((h) => [h.score, state.bySym[h.symbol]]).filter(([, s]) => s);
-      document.getElementById("k-out").innerHTML = hits.map(([sc, s]) => card(s).replace('<div class="meta">', `<div class="meta"><span class="tag">${Math.round(sc * 100)}% match</span>`)).join("") ||
-        `<div class="empty">That doesn't look like one of the Library's plants.${res.outside ? ` It may be ${esc(res.outside)}.` : ""}</div>`;
-      out.querySelector("p").textContent = "Compare the matches with your plant. Identification from a photo is a best guess.";
-    } catch { out.querySelector("p").textContent = "Identification isn't available right now."; }
+      document.getElementById("k-count").innerHTML = hits.length ? `Best matches for your photo. Compare closely; a photo ID is a best guess.` : `That doesn't look like one of the Library's plants.${res.outside ? ` It may be ${esc(res.outside)}.` : ""}`;
+      document.getElementById("k-out").innerHTML = hits.map(([sc, s]) => card(s).replace('<div class="meta">', `<div class="meta"><span class="tag">${Math.round(sc * 100)}% match</span>`)).join("");
+      out.innerHTML = "";
+    } catch { out.innerHTML = `<p>Photo identification isn't available right now.</p>`; }
   });
-  draw();
+  render();
 }
 
 // ---------- about ----------

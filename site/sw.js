@@ -1,6 +1,6 @@
 // Offline support: the app shell and plant data are cached on install; images are
 // cached as they are viewed, so a visitor who browses at the Library keeps them in the field.
-const VERSION = "pf-v2";
+const VERSION = "pf-v4";
 const SHELL = ["./", "index.html", "css/plantfinder.css", "js/app.js", "js/viz.js", "config.js", "data/species.json", "data/plantings.json", "data/zonemap.svg", "art/blot.webp", "manifest.webmanifest", "icons/icon.svg"];
 
 self.addEventListener("install", (e) => {

@@ -148,6 +148,19 @@ export function typeIcon(t, size = 28) {
 // Zones as numbers for comparison: "4a" -> 4.0, "4b" -> 4.5
 export const zoneNum = (z) => (z ? parseInt(z, 10) + (/b$/.test(z) ? 0.5 : 0) : null);
 
+// Zone range a plant grows well in: cold end from USDA and wild records, warm end from
+// where it grows wild (scripts/zonemap/zone_ranges.py). Null ends mean "not known".
+export function plantRange(sp) {
+  const r = sp?.zone_range;
+  return { min: r?.min || sp?.hardy_to_zone || null, max: r?.max || null };
+}
+export function rangeText(sp) {
+  const { min, max } = plantRange(sp);
+  if (min && max) return `Zones ${min} to ${max}`;
+  if (min) return `Zone ${min} and warmer`;
+  return null;
+}
+
 export async function lookupZone(zip) {
   const r = await fetch(`https://phzmapi.org/${encodeURIComponent(zip)}.json`);
   if (!r.ok) throw new Error("ZIP code not found");
@@ -155,11 +168,13 @@ export async function lookupZone(zip) {
 }
 
 export function growVerdict(sp, zone) {
-  const need = zoneNum(sp.hardy_to_zone);
+  const { min, max } = plantRange(sp);
   const have = zoneNum(zone);
-  if (need == null) return { ok: null, text: `Your zone is ${zone}. USDA PLANTS doesn't record a cold limit for this plant; it grows wild in western North Dakota (zone 4a at the Library).` };
-  if (have >= need) return { ok: true, text: `Yes. Your zone is ${zone}, and this plant is hardy to zone ${sp.hardy_to_zone}.` };
-  return { ok: false, text: `Maybe not. Your zone is ${zone}, colder than this plant's zone ${sp.hardy_to_zone} limit.` };
+  if (!min) return { ok: null, text: `Your zone is ${zone}. USDA PLANTS doesn't record a cold limit for this plant; it grows wild in western North Dakota (zone 4a at the Library).` };
+  const range = max ? `zones ${min} to ${max}` : `zone ${min} and warmer`;
+  if (have < zoneNum(min)) return { ok: false, text: `Probably not. Your zone is ${zone}, colder than this plant's range (${range}).` };
+  if (max && have > zoneNum(max)) return { ok: false, text: `It may struggle. Your zone is ${zone}, warmer than where this plant grows wild (${range}).` };
+  return { ok: true, text: `Yes. Your zone is ${zone}, inside this plant's range (${range}).` };
 }
 
 // ---------- Field journal: watercolor at-a-glance notes ----------
@@ -221,7 +236,7 @@ export function journalGlance(sp, base = "") {
     <div class="jn jn-height"><span class="jl">Height</span>${journalHeight(sp, base)}</div>
     <div class="jn"><span class="jl">Light</span><img class="jart" src="${base}art/${sunArt(sp)}.webp" alt=""><span class="jv">${esc(sun)}</span><span class="jd">${esc(sunD)}</span></div>
     <div class="jn"><span class="jl">Water</span><span class="jdrops">${dropsHtml}</span><span class="jv">${esc(water)}</span><span class="jd">${esc(waterD)}</span></div>
-    <div class="jn"><span class="jl">Winter</span><img class="jart" src="${base}art/snow.webp" alt=""><span class="jv">${sp.hardy_to_zone ? "Zone " + esc(sp.hardy_to_zone) : "Very hardy"}</span><span class="jd">${t.min_temp_f != null ? `Survives about ${t.min_temp_f}°F` : "Grows wild in western North Dakota"}</span></div>
+    <div class="jn"><span class="jl">Zones</span><img class="jart" src="${base}art/snow.webp" alt=""><span class="jv">${esc(rangeText(sp) || "Very hardy")}</span><span class="jd">${t.min_temp_f != null ? `Survives about ${t.min_temp_f}°F` : "Grows wild in western North Dakota"}</span></div>
     ${t.flower_color ? `<div class="jn"><span class="jl">Flower</span>${blot(flowerColor(sp), 64, base)}<span class="jv">${esc(t.flower_color)}</span></div>` : ""}
   </section>`;
 }
@@ -248,16 +263,16 @@ function loadZoneSvg(base) {
 // opts: { plant, zone: {zone, zip, coordinates:{lat, lon}}, base, legend: true }
 export async function renderZoneMap(el, { plant = null, zone = null, base = "", legend = true } = {}) {
   const svg = await loadZoneSvg(base);
-  const need = plant ? zoneNum(plant.hardy_to_zone) : null;
+  const rng = plant ? plantRange(plant) : { min: null, max: null };
+  const lo = zoneNum(rng.min), hi = zoneNum(rng.max);
   el.classList.add("zonemap");
   el.classList.toggle("for-plant", !!plant);
   el.innerHTML = `<div class="zm-frame">${svg}</div>`;
-  // pencil hatching for zones too cold for this plant
-  el.querySelector("defs")?.insertAdjacentHTML("beforeend", `<pattern id="zm-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(38)"><rect width="6" height="6" fill="#efe6d1"/><line x1="0" y1="0" x2="0" y2="6" stroke="#6d5537" stroke-width="1.1" stroke-opacity=".55"/></pattern>`);
   const layers = [...el.querySelectorAll(".zone")];
   for (const g of layers) {
     const z = g.dataset.zone;
-    g.classList.toggle("ok", !plant || need == null || zoneNum(z) >= need);
+    const zn = zoneNum(z);
+    g.classList.toggle("ok", !plant || ((lo == null || zn >= lo) && (hi == null || zn <= hi)));
     g.classList.toggle("mine", !!zone && z === zone.zone);
   }
   const pins = el.querySelector(".pins");
@@ -271,11 +286,15 @@ export async function renderZoneMap(el, { plant = null, zone = null, base = "", 
   if (legend) {
     const zs = layers.map((g) => g.dataset.zone);
     el.insertAdjacentHTML("beforeend", `<div class="zm-legend" aria-hidden="true">${layers.map((g) =>
-      `<span class="zm-key${g.classList.contains("ok") ? " ok" : ""}${g.classList.contains("mine") ? " mine" : ""}">${blot(g.style.getPropertyValue("--zc"), 22, base)}<b>${g.dataset.zone}</b></span>`).join("")}</div>`);
+      `<span class="zm-key${g.classList.contains("ok") ? " ok" : ""}${g.classList.contains("mine") ? " mine" : ""}">${blot(plant && !g.classList.contains("ok") ? "#b9b4aa" : g.style.getPropertyValue("--zc"), 22, base)}<b>${g.dataset.zone}</b></span>`).join("")}</div>`);
     void zs;
   }
   const caption = plant
-    ? (need == null ? `Cold limit not recorded for this plant. It grows wild in western North Dakota (Medora is zone 4a).` : `Painted zones are where ${plant.common.toLowerCase()} should survive the winter: zone ${plant.hardy_to_zone} and warmer. Pencil-hatched zones are too cold.`)
+    ? (rng.min && rng.max
+      ? `Painted zones (${rng.min} to ${rng.max}) are where ${plant.common.toLowerCase()} grows well, from its cold limit and where it grows wild across the U.S. Gray zones are too cold or too warm.`
+      : rng.min
+        ? `Painted zones are where ${plant.common.toLowerCase()} should survive the winter: zone ${rng.min} and warmer. Gray zones are too cold.`
+        : `Cold limit not recorded for this plant. It grows wild in western North Dakota (Medora is zone 4a).`)
     : `Hardiness zones of the lower 48 states. Each zone is 10°F of average winter low; a and b split it in half.`;
   el.insertAdjacentHTML("beforeend", `<p class="zm-cap">${esc(caption)}${c && !LOWER48(+c.lat, +c.lon) ? " Your ZIP code is outside the lower 48, so it isn't pinned." : ""}</p>
     <p class="zm-src">Drawn from the 2023 USDA Plant Hardiness Zone Map temperature data (PRISM Climate Group, Oregon State University; USDA-ARS), simplified and painted for this guide. This is not the official USDA Plant Hardiness Zone Map; see <a href="https://planthardiness.ars.usda.gov/" target="_blank" rel="noopener">planthardiness.ars.usda.gov</a>.</p>`);

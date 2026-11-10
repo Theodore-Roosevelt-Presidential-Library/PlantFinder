@@ -4,7 +4,7 @@
 //   <trpl-plant-grid area="roof-northwest" limit="8"></trpl-plant-grid>
 //   <trpl-bloom-now limit="6"></trpl-bloom-now>
 //   <trpl-zone-check></trpl-zone-check>
-import { TYPES, MONTH_NAMES, esc, flowerColor, heroImage, bloomRibbon, bloomText, silhouette, typeIcon, zoneNum, lookupZone, journalBloom, journalHeight, renderZoneMap } from "./js/viz.js";
+import { TYPES, MONTH_NAMES, esc, flowerColor, heroImage, bloomRibbon, bloomText, silhouette, typeIcon, zoneNum, lookupZone, journalBloom, journalHeight, renderZoneMap, growVerdict } from "./js/viz.js";
 
 const BASE = new URL(".", import.meta.url).href;
 let dataPromise;
@@ -74,7 +74,7 @@ button { font-family: Oswald, sans-serif; text-transform: uppercase; letter-spac
 .zonemap-svg .nation { fill: none; stroke: #4a3826; stroke-width: 1.3; stroke-linejoin: round; opacity: .85; }
 .zonemap-svg .states { fill: none; stroke: #5b4630; stroke-width: .55; stroke-linejoin: round; opacity: .55; }
 /* plant view: zones the plant survives keep their color; the rest fade to bare paper wash */
-.zonemap.for-plant .zone:not(.ok) path { fill: url(#zm-hatch); fill-opacity: 1; mix-blend-mode: normal; stroke: #6d5537; stroke-opacity: .35; }
+.zonemap.for-plant .zone:not(.ok) path { fill: #a9a39a; fill-opacity: .42; stroke: #8f887d; stroke-opacity: .35; }
 .zonemap.for-plant .zone.ok path { fill-opacity: .78; }
 .zonemap-svg .pin circle { fill: #fffdf6; stroke: #2b2118; stroke-width: 1.6; }
 .zonemap-svg .pin .dot { fill: #b8492f; stroke: none; }
@@ -83,7 +83,7 @@ button { font-family: Oswald, sans-serif; text-transform: uppercase; letter-spac
 .zm-legend { display: flex; flex-wrap: wrap; gap: .25rem .6rem; margin: .6rem 0 .2rem; }
 .zm-key { display: inline-flex; align-items: center; gap: .25rem; font-size: .95rem; opacity: .9; }
 .zm-key b { font-weight: normal; }
-.for-plant .zm-key:not(.ok) { opacity: .3; filter: grayscale(.8); }
+.for-plant .zm-key:not(.ok) { opacity: .55; }
 .zm-key.mine b { text-decoration: underline; text-underline-offset: 3px; }
 .zm-cap { font-style: italic; margin: .4rem 0 .2rem; }
 .zm-src { font-family: 'Source Sans 3', sans-serif; font-size: .74rem; color: #5D615F; margin: 0; }
@@ -188,8 +188,8 @@ class ZoneCheck extends Base {
         const z = await lookupZone(zip);
         try { localStorage.setItem("pf-zone", JSON.stringify({ zip, ...z })); } catch {}
         if (mapEl) renderZoneMap(mapEl, { zone: { zip, ...z }, base: BASE, legend: false });
-        const ok = species.filter((s) => zoneNum(s.hardy_to_zone) == null || zoneNum(s.hardy_to_zone) <= zoneNum(z.zone));
-        out.innerHTML = `<b>Zone ${esc(z.zone)}.</b> ${ok.length} of the Library's ${species.length} native plants should survive your winters. <a class="more" href="${BASE}#/grow" target="_top">See which ones</a>`;
+        const ok = species.filter((s) => growVerdict(s, z.zone).ok !== false);
+        out.innerHTML = `<b>Zone ${esc(z.zone)}.</b> ${ok.length} of the Library's ${species.length} native plants grow well in your zone. <a class="more" href="${BASE}#/grow" target="_top">See which ones</a>`;
       } catch { out.textContent = "We couldn't find that ZIP code."; }
     };
     this.root.querySelector("button").addEventListener("click", go);
@@ -197,8 +197,39 @@ class ZoneCheck extends Base {
   }
 }
 
+// The whole Plant Finder (browse, plant pages, bloom clock, map) in a self-sizing frame.
+//   <trpl-plant-finder></trpl-plant-finder>
+//   <trpl-plant-finder start="#/bloom" bare></trpl-plant-finder>   (bare = no Plant Finder header)
+class PlantFinder extends HTMLElement {
+  connectedCallback() {
+    if (this.frame) return;
+    const start = this.getAttribute("start") || "#/";
+    const mode = this.hasAttribute("bare") ? "bare" : "1";
+    const f = (this.frame = document.createElement("iframe"));
+    f.src = `${BASE}?embed=${mode}${start.startsWith("#") ? start : "#" + start}`;
+    f.title = this.getAttribute("title") || "Plant Finder: native plants of the Theodore Roosevelt Presidential Library";
+    f.loading = "lazy";
+    f.allow = "camera; clipboard-write";
+    f.style.cssText = `width:100%;border:0;display:block;min-height:${this.getAttribute("min-height") || 900}px;height:1200px;`;
+    this.style.display = "block";
+    this.appendChild(f);
+    this.onMsg = (e) => {
+      if (e.source !== f.contentWindow || !e.data?.plantfinder) return;
+      if (e.data.height) f.style.height = `${Math.ceil(e.data.height) + 4}px`;
+      if (e.data.navigated && this.navigated) {
+        const top = this.getBoundingClientRect().top;
+        if (top < 0 || top > window.innerHeight) window.scrollBy({ top: top - 80, behavior: "smooth" });
+      }
+      if (e.data.navigated) this.navigated = true;
+    };
+    window.addEventListener("message", this.onMsg);
+  }
+  disconnectedCallback() { window.removeEventListener("message", this.onMsg); }
+}
+
 const define = (n, c) => customElements.get(n) || customElements.define(n, c);
 define("trpl-plant-card", PlantCard);
 define("trpl-plant-grid", PlantGrid);
 define("trpl-bloom-now", BloomNow);
 define("trpl-zone-check", ZoneCheck);
+define("trpl-plant-finder", PlantFinder);

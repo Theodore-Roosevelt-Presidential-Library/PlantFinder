@@ -8,7 +8,7 @@ Live at **https://plantfinder.labs.trlibrary.com**.
 - **Where they grow:** one page per planting area (gardens, green roofs, stormwater prairie, restored prairie), with its design intent from the spec.
 - **Bloom clock:** a 12-month wheel of what flowers when.
 - **What is this?** A visual key (type, color, height, month) that runs in the browser. Photo identification turns on when `site/config.js` points to an identification service.
-- **Embeds:** web components and iframe views for trlibrary.com. See `site/embed.html` (live at `/embed.html`).
+- **Embeds:** the whole directory (`<trpl-plant-finder>`, self-sizing), plus single plants, area grids, blooming now and the zone check, for trlibrary.com. See `site/embed.html` (live at `/embed.html`).
 - **Offline:** installable as an app; plant data and viewed images are cached for the field.
 
 ## Data
@@ -32,11 +32,12 @@ python3 -m venv .venv && source .venv/bin/activate
 python3 -m pip install pillow          # used to resize images
 python3 scripts/build_species.py     # writes site/data/species.json and plantings.json
 python3 scripts/download_images.py   # saves images to site/img/ and points the data at them
+(cd scripts/zonemap && python3 zone_ranges.py)   # each plant's zone range (needs conus.tif; see scripts/zonemap/README.md)
 ```
 
 Sources: USDA-NRCS PLANTS (names, traits, public-domain images including Britton & Brown 1913
 illustrations), iNaturalist (CC0 photos; flowering months from sightings within ~400 km of
-Medora), NPSpecies (Theodore Roosevelt National Park checklist), GBIF (range maps),
+Medora), NPSpecies (Theodore Roosevelt National Park checklist), GBIF (range maps, and the wild records behind each plant's zone range),
 2023 USDA Plant Hardiness Zone Map via phzmapi.org (ZIP lookup) and the PRISM temperature raster on USDA's Ag Data Commons (the watercolor zone map; see `scripts/zonemap/`).
 
 **Image rights:** only public-domain and CC0 images are used. Each image carries its credit,

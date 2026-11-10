@@ -17,3 +17,13 @@ python3 -m venv .venv && source .venv/bin/activate && pip install rasterio shape
 python3 zones.py          # classify into half zones, trace outlines -> zones.geojson
 npm install && node build.mjs   # project (Albers, same layout as us-atlas) -> site/data/zonemap.svg
 ```
+
+## Zone ranges per plant
+
+`zone_ranges.py` adds `zone_range` (`min`, `max`) to each plant in `site/data/species.json`.
+USDA PLANTS records only a cold limit, and nearly every plant here is hardy to the coldest
+zone in the lower 48, so the cold limit alone paints the whole map. The range uses each
+plant's wild U.S. records from GBIF, looked up on the 2023 temperature grid: the warm end
+is the 97th percentile of those zones; the cold end is the coldest of the USDA limit, the
+3rd percentile, and Medora's 4a (every plant here grows at the Library). Zones outside the
+range are gray on the map.

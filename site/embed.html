@@ -20,7 +20,13 @@
 <pre class="code">&lt;script type="module" src="https://plantfinder.labs.trlibrary.com/embed.js"&gt;&lt;/script&gt;</pre>
 <p class="small">In Drupal, paste it into a Full HTML text block above the first widget. If the editor strips script tags, use the iframe versions at the bottom of this page.</p>
 
-<h2>2. A single plant</h2>
+<h2>2. The whole Plant Finder</h2>
+<p>The full directory, with browsing, filters, plant pages, the bloom clock and the zone map, on one trlibrary.com page. It sizes itself to its content, so there is no scroll box inside the page, and it scrolls the page back to the top when a visitor opens a plant. Options: <code>start</code> opens on a view (<code>#/bloom</code>, <code>#/places</code>, <code>#/grow</code>, <code>#/plant/liatris-punctata</code>); <code>bare</code> hides the Plant Finder header bar for pages that have their own title.</p>
+<pre class="code">&lt;trpl-plant-finder&gt;&lt;/trpl-plant-finder&gt;
+&lt;trpl-plant-finder start="#/places" bare&gt;&lt;/trpl-plant-finder&gt;</pre>
+<div class="embed-demo"><trpl-plant-finder min-height="700"></trpl-plant-finder></div>
+
+<h2>2b. A single plant</h2>
 <p>Use the plant's slug (its scientific name with dashes) or its USDA symbol. Slugs are in the address bar of each plant page.</p>
 <pre class="code">&lt;trpl-plant-card plant="liatris-punctata"&gt;&lt;/trpl-plant-card&gt;</pre>
 <div class="embed-demo"><trpl-plant-card plant="liatris-punctata"></trpl-plant-card></div>

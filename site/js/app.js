@@ -4,7 +4,15 @@ import {
 } from "./viz.js";
 
 const params = new URLSearchParams(location.search);
-if (params.has("embed")) document.body.classList.add("embed-mode");
+const EMBED = params.has("embed");
+if (EMBED) document.body.classList.add("embed-mode");
+if (params.get("embed") === "bare") document.body.classList.add("bare");
+function tellParent(msg) {
+  if (EMBED && window.parent !== window) window.parent.postMessage({ plantfinder: true, ...msg }, "*");
+}
+if (EMBED && "ResizeObserver" in window) {
+  new ResizeObserver(() => tellParent({ height: document.documentElement.scrollHeight })).observe(document.body);
+}
 
 const state = { species: [], bySlug: {}, bySym: {}, areas: [], areaById: {}, filters: loadFilters(), zone: loadZone() };
 const $main = document.getElementById("main");
@@ -45,6 +53,7 @@ function setNav(name) {
 function route() {
   const [, view, arg] = (location.hash || "#/").split("/");
   window.scrollTo(0, 0);
+  tellParent({ navigated: location.hash || "#/" });
   const v = view || "";
   if (v === "plant" && state.bySlug[arg]) return viewPlant(state.bySlug[arg]);
   if (v === "places" && arg && state.areaById[arg]) return viewPlace(state.areaById[arg]);
@@ -83,7 +92,7 @@ function matches(sp, f) {
   if (f.month && !(sp.bloom_months || []).includes(+f.month)) return false;
   if (f.area && !sp.areas.some((a) => a.area === f.area)) return false;
   if (f.park && !sp.in_park) return false;
-  if (f.zone && state.zone && zoneNum(sp.hardy_to_zone) != null && zoneNum(sp.hardy_to_zone) > zoneNum(state.zone.zone)) return false;
+  if (f.zone && state.zone && growVerdict(sp, state.zone.zone).ok === false) return false;
   return true;
 }
 
@@ -404,19 +413,19 @@ function viewGrow() {
   setNav("grow");
   document.title = "Grow them at home | Plant Finder";
   $main.innerHTML = `<h1>Grow them at home</h1>
-  <p class="lede">These are tough plants, built for wind, drought and North Dakota winters. Enter your ZIP code to find your USDA hardiness zone and see which of the Library's plants should survive your winters.</p>
+  <p class="lede">These are tough plants, built for wind, drought and North Dakota winters. Enter your ZIP code to find your USDA hardiness zone and see which of the Library's plants grow well where you live.</p>
   <div class="grow-layout">
     <div id="zonemap"></div>
     <div class="panel"><div class="zip"><label for="zip">ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" value="${esc(state.zone?.zip || "")}" placeholder="58645"><button class="btn" id="go">Check my zone</button></div><div id="out" aria-live="polite"></div></div>
   </div>
   <div id="list"></div>
-  <p class="credit">Zones from the 2023 USDA Plant Hardiness Zone Map via phzmapi.org. Plant cold limits from USDA PLANTS. Medora is zone 4a.</p>`;
+  <p class="credit">Zones from the 2023 USDA Plant Hardiness Zone Map via phzmapi.org. Each plant’s range combines its USDA PLANTS cold limit with the zones where it grows wild in the U.S. (GBIF records). Medora is zone 4a.</p>`;
   const show = (z) => {
-    const ok = state.species.filter((s) => zoneNum(s.hardy_to_zone) == null || zoneNum(s.hardy_to_zone) <= zoneNum(z.zone));
+    const ok = state.species.filter((s) => growVerdict(s, z.zone).ok !== false);
     const no = state.species.filter((s) => !ok.includes(s));
-    document.getElementById("out").innerHTML = `<div class="verdict ok"><b>ZIP ${esc(z.zip)} is zone ${esc(z.zone)}</b> (winter lows of ${esc(z.temperature_range)}°F). ${ok.length} of the ${state.species.length} plants should survive your winters.</div>`;
-    document.getElementById("list").innerHTML = `<h2>Hardy in zone ${esc(z.zone)}</h2><div class="grid">${ok.sort((a, b) => a.common.localeCompare(b.common)).map(card).join("")}</div>` +
-      (no.length ? `<h2>Too cold for these</h2><div class="grid">${no.map(card).join("")}</div>` : "");
+    document.getElementById("out").innerHTML = `<div class="verdict ok"><b>ZIP ${esc(z.zip)} is zone ${esc(z.zone)}</b> (winter lows of ${esc(z.temperature_range)}°F). ${ok.length} of the ${state.species.length} plants grow well in your zone.</div>`;
+    document.getElementById("list").innerHTML = `<h2>Good fits for zone ${esc(z.zone)}</h2><div class="grid">${ok.sort((a, b) => a.common.localeCompare(b.common)).map(card).join("")}</div>` +
+      (no.length ? `<h2>Outside their range in zone ${esc(z.zone)}</h2><p class="small">These grow wild in colder or warmer places than yours. They may survive with extra care.</p><div class="grid">${no.map(card).join("")}</div>` : "");
   };
   const drawMap = () => renderZoneMap(document.getElementById("zonemap"), { zone: state.zone });
   drawMap();

@@ -209,10 +209,11 @@ def usda_images(imgs):
         credit = i.get("CommonName") or "USDA-NRCS PLANTS Database"
         if lit:
             credit = f"{credit}. {lit}. {i.get('LiteratureYear') or ''}".strip()
+        best = i.get("OriginalSizeImageLibraryPath") or i.get("LargeSizeImageLibraryPath") or i["StandardSizeImageLibraryPath"]
         out.append({
             "kind": "illustration" if is_ill else "photo",
-            "url": USDA_WEB + i["StandardSizeImageLibraryPath"],
-            "large": USDA_WEB + (i.get("LargeSizeImageLibraryPath") or i["StandardSizeImageLibraryPath"]),
+            "url": USDA_WEB + best,
+            "fallback": USDA_WEB + (i.get("LargeSizeImageLibraryPath") or i["StandardSizeImageLibraryPath"]),
             "credit": credit.rstrip(". "),
             "provider": i.get("ProvidedBy") or i.get("InstitutionName"),
             "license": "Public domain",
@@ -256,23 +257,35 @@ def inat_nearby_count(taxon_id):
     return (d or {}).get("total_results", 0)
 
 
-def inat_cc0_photos(taxon_id, n=4):
+def inat_cc0_photos(taxon_id, n=6):
+    """CC0 research-grade photos, flowering ones first, nearest to Medora first."""
     lat, lng = MEDORA
     photos, seen = [], set()
-    for extra in (f"&lat={lat}&lng={lng}&radius=600", ""):
+    flowering = "&term_id=12&term_value_id=13"
+    passes = [
+        (flowering + f"&lat={lat}&lng={lng}&radius=900", True),
+        (flowering, True),
+        (f"&lat={lat}&lng={lng}&radius=900", False),
+        ("", False),
+    ]
+    for extra, in_bloom in passes:
         d = fetch(f"{INAT}/observations?taxon_id={taxon_id}&photo_license=cc0&quality_grade=research"
-                  f"&order_by=votes&per_page=12{extra}", inat=True)
+                  f"&order_by=votes&per_page=20{extra}", inat=True)
         for o in (d or {}).get("results", []):
-            for p in o.get("photos", [])[:2]:
+            for p in o.get("photos", [])[:1]:  # first photo of an observation is usually the best
                 if p.get("license_code") != "cc0" or p["id"] in seen:
+                    continue
+                dims = p.get("original_dimensions") or {}
+                if dims and min(dims.get("width", 0), dims.get("height", 0)) < 700:
                     continue
                 seen.add(p["id"])
                 user = o.get("user") or {}
                 who = user.get("name") or user.get("login") or "iNaturalist observer"
                 photos.append({
                     "kind": "photo",
-                    "url": p["url"].replace("square", "medium"),
-                    "large": p["url"].replace("square", "large"),
+                    "in_bloom": in_bloom,
+                    "url": p["url"].replace("square", "original"),
+                    "fallback": p["url"].replace("square", "large"),
                     "credit": f"{who}, no rights reserved (CC0)",
                     "license": "CC0",
                     "source": "iNaturalist",
@@ -466,20 +479,22 @@ def main():
         if sym in species:
             species[sym].update(ov)
 
-    # Hero image: an illustration if we have one, else the first photo
+    # Order images: field photos in bloom first, then other field photos, then the
+    # botanical illustration, then USDA seed and specimen close-ups.
     for rec in species.values():
-        ills = [i for i in rec["images"] if i["kind"] == "illustration"]
-        photos = [i for i in rec["images"] if i["kind"] == "photo"]
-        # Field photos first: iNaturalist CC0, then USDA; USDA seed and specimen
-        # close-ups (ARS Systematic Botany lab) go last.
         def rank(i):
-            if i["source"] == "iNaturalist":
+            specimen = "Systematic Botany" in (i.get("provider") or "") or "Hurst" in i["credit"]
+            if i["kind"] == "illustration":
+                return 3
+            if specimen:
+                return 4
+            if i.get("in_bloom"):
                 return 0
-            if "Systematic Botany" in (i.get("provider") or "") or "Hurst" in i["credit"]:
-                return 2
-            return 1
-        photos.sort(key=rank)
-        rec["images"] = ills[:1] + photos[:5]
+            return 1 if i["source"] == "iNaturalist" else 2
+        imgs = sorted(rec["images"], key=rank)
+        ills = [i for i in imgs if i["kind"] == "illustration"][:1]
+        photos = [i for i in imgs if i["kind"] == "photo"][:6]
+        rec["images"] = sorted(photos + ills, key=rank)
 
     OUT.mkdir(parents=True, exist_ok=True)
     out = sorted(species.values(), key=lambda r: r["common"])

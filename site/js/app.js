@@ -1,6 +1,6 @@
 import {
   MONTHS, MONTH_NAMES, TYPES, FLOWER, esc, flowerColor, heroImage, imgSrc, bloomRibbon, bloomText,
-  silhouette, fmtFeet, sunText, waterText, sunIcon, dropIcon, snowIcon, typeIcon, zoneNum, lookupZone, growVerdict,
+  silhouette, fmtFeet, sunText, waterText, sunIcon, dropIcon, snowIcon, typeIcon, zoneNum, lookupZone, growVerdict, journalGlance,
 } from "./viz.js";
 
 const params = new URLSearchParams(location.search);
@@ -60,7 +60,7 @@ function route() {
 function card(sp) {
   const img = heroImage(sp);
   const pic = img
-    ? `<img loading="lazy" src="${esc(imgSrc(img))}" alt="" class="${img.kind === "illustration" ? "ill" : ""}">`
+    ? `<img loading="lazy" src="${esc(img.thumb || imgSrc(img))}" alt="" class="${img.kind === "illustration" ? "ill" : ""}">`
     : `<div class="noimg">${typeIcon(sp.type, 54)}</div>`;
   return `<a class="card" href="#/plant/${sp.slug}">
     <div class="pic">${pic}</div>
@@ -108,12 +108,13 @@ function viewBrowse() {
     <div>
       <h1>The native plants of the Library</h1>
       <p class="lede">Every grass, wildflower and shrub growing on the Library's grounds and green roofs is a plant of the northern Great Plains. Find one you saw on your visit, learn where it grows on campus, and see whether it will grow at your house.</p>
+      <div class="stats">
+        <div class="stat"><b>${state.species.length}</b><span>Native species</span></div>
+        <div class="stat"><b>${state.areas.length}</b><span>Planting areas</span></div>
+        <div class="stat"><b>${parkCount}</b><span>Also in the national park</span></div>
+      </div>
     </div>
-    <div class="stats">
-      <div class="stat"><b>${state.species.length}</b><span>Native species</span></div>
-      <div class="stat"><b>${state.areas.length}</b><span>Planting areas</span></div>
-      <div class="stat"><b>${parkCount}</b><span>Also in the national park</span></div>
-    </div>
+    <img class="vignette" src="art/prairie.webp" alt="Watercolor sketch of Badlands prairie with blazing star, coneflowers, yarrow and globemallow in front of banded buttes" width="1344" height="576">
   </section>
   <section class="filters ${window.innerWidth < 760 ? "collapsed" : ""}" aria-label="Filter plants">
     <div class="row">
@@ -181,16 +182,16 @@ function gbifMap(sp) {
 
 function credit(img) {
   if (!img) return "";
-  const lic = img.license === "CC0" ? "CC0" : "Public domain";
+  const lic = /CC0|public domain/i.test(img.credit) ? "" : (img.license === "CC0" ? " CC0." : " Public domain.");
   const src = img.source_url ? `<a href="${esc(img.source_url)}" target="_blank" rel="noopener">${esc(img.source)}</a>` : esc(img.source);
-  return `${esc(img.credit)}. ${lic}. ${src}.`;
+  return `${esc(img.credit)}.${lic} ${src}.`;
 }
 
 const BLOOM_SRC = {
   inat: "from flowering sightings within about 250 miles of Medora",
   "inat-region": "from flowering sightings across the northern plains",
   "inat-us": "from flowering sightings across the U.S.",
-  usda: "USDA PLANTS bloom period",
+  usda: "from the USDA PLANTS bloom period",
 };
 
 function viewPlant(sp) {
@@ -217,7 +218,7 @@ function viewPlant(sp) {
     <figure class="hero-figure">
       <div class="frame">${first ? `<img id="heroimg" src="${esc(imgSrc(first))}" alt="${esc(sp.common)}${first.kind === "illustration" ? ", botanical illustration" : ""}" class="${first.kind === "illustration" ? "ill" : ""}">` : typeIcon(sp.type, 120)}</div>
       ${first ? `<figcaption id="herocap">${credit(first)}</figcaption>` : `<figcaption>Photos of this plant at the Library are coming.</figcaption>`}
-      ${imgs.length > 1 ? `<div class="thumbs" role="list">${imgs.map((im, i) => `<button role="listitem" data-i="${i}" aria-current="${i === 0}" aria-label="Show image ${i + 1}"><img src="${esc(imgSrc(im))}" alt="" loading="lazy" class="${im.kind === "illustration" ? "ill" : ""}"></button>`).join("")}</div>` : ""}
+      ${imgs.length > 1 ? `<div class="thumbs" role="list">${imgs.map((im, i) => `<button role="listitem" data-i="${i}" aria-current="${i === 0}" aria-label="Show image ${i + 1}"><img src="${esc(im.thumb || imgSrc(im))}" alt="" loading="lazy" class="${im.kind === "illustration" ? "ill" : ""}"></button>`).join("")}</div>` : ""}
     </figure>
     <div>
       <div class="names">
@@ -231,14 +232,8 @@ function viewPlant(sp) {
         <span class="badge forest">Native to North Dakota's prairie</span>
         ${sp.in_park ? `<span class="badge night">Recorded in Theodore Roosevelt National Park</span>` : ""}
       </div>
-      <div class="glance">
-        <div class="g" style="grid-column:1/-1"><span class="k">Bloom time</span>${bloomRibbon(sp, { width: 360, height: 30 })}<span class="d">${esc(bloomText(sp))}${BLOOM_SRC[sp.bloom_source] ? ` <span class="small">(${BLOOM_SRC[sp.bloom_source]})</span>` : ""}</span></div>
-        <div class="g"><span class="k">Height</span>${silhouette(sp)}</div>
-        <div class="g"><span class="k">Sun</span>${sunIcon}<span class="v">${esc(sun)}</span><span class="d">${esc(sunD)}</span></div>
-        <div class="g"><span class="k">Water</span>${dropIcon}<span class="v">${esc(water)}</span><span class="d">${esc(waterD)}</span></div>
-        <div class="g"><span class="k">Cold hardiness</span>${snowIcon}<span class="v">${sp.hardy_to_zone ? "Zone " + esc(sp.hardy_to_zone) : "Very hardy"}</span><span class="d">${t.min_temp_f != null ? `Survives about ${t.min_temp_f}°F` : "Grows wild in western North Dakota"}</span></div>
-        ${t.flower_color ? `<div class="g"><span class="k">Flower color</span><span style="width:34px;height:34px;border-radius:50%;background:${flowerColor(sp)};border:1px solid rgba(0,0,0,.2)"></span><span class="v">${esc(t.flower_color)}</span></div>` : ""}
-      </div>
+      ${journalGlance(sp)}
+      ${BLOOM_SRC[sp.bloom_source] ? `<p class="credit">Bloom months ${BLOOM_SRC[sp.bloom_source]}.</p>` : ""}
     </div>
   </div>
 
@@ -274,7 +269,7 @@ function viewPlant(sp) {
 
   ${sp.story ? `<h2>The story</h2><div class="panel">${sp.story}</div>` : ""}
 
-  ${imgs.length ? `<h2>Images</h2><div class="gallery">${imgs.map((im) => `<figure><img loading="lazy" src="${esc(imgSrc(im))}" alt="${esc(sp.common)}" class="${im.kind === "illustration" ? "ill" : ""}"><figcaption>${credit(im)}</figcaption></figure>`).join("")}</div>
+  ${imgs.length ? `<h2>Images</h2><div class="gallery">${imgs.map((im) => `<figure><img loading="lazy" src="${esc(im.thumb || imgSrc(im))}" alt="${esc(sp.common)}" class="${im.kind === "illustration" ? "ill" : ""}"><figcaption>${credit(im)}</figcaption></figure>`).join("")}</div>
   <p class="small">The Library is photographing these plants on its grounds; those photos will replace these as they are added.</p>` : ""}
 
   <h2>Names</h2>

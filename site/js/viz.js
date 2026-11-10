@@ -109,12 +109,17 @@ export function fmtFeet(ft) {
   return `${(+ft).toFixed(ft % 1 ? 1 : 0)} ft`;
 }
 
+// Light comes from the Library's own planting plans, which record sun or shade for each
+// planting area. (USDA PLANTS shade-tolerance values proved unreliable for these species.)
 export function sunText(sp) {
-  const s = (sp?.traits?.shade_tolerance || "").toLowerCase();
-  if (s === "intolerant") return ["Full sun", "Needs open sun all day"];
-  if (s === "intermediate") return ["Sun to part shade", "Handles some afternoon shade"];
-  if (s === "tolerant" || s === "high") return ["Sun or shade", "Grows in sun or shade"];
-  return ["Sun", "Sun-loving prairie plant"];
+  const ids = (sp?.areas || []).map((a) => a.area);
+  if (ids.includes("shade-rock-garden")) return ["Sun or shade", "Planted in the Library's shade garden as well as in sun"];
+  if (ids.includes("berm-faces") || ids.includes("living-fire-lane")) return ["Sun to part shade", "Planted where it gets some shade during the day"];
+  return ["Full sun", "Planted in open sun, like the prairie around it"];
+}
+export function sunArt(sp) {
+  const [label] = sunText(sp);
+  return label === "Sun or shade" ? "shade" : label === "Sun to part shade" ? "partsun" : "sun";
 }
 export function waterText(sp) {
   const d = (sp?.traits?.drought_tolerance || "").toLowerCase();
@@ -155,4 +160,68 @@ export function growVerdict(sp, zone) {
   if (need == null) return { ok: null, text: `Your zone is ${zone}. USDA PLANTS doesn't record a cold limit for this plant; it grows wild in western North Dakota (zone 4a at the Library).` };
   if (have >= need) return { ok: true, text: `Yes. Your zone is ${zone}, and this plant is hardy to zone ${sp.hardy_to_zone}.` };
   return { ok: false, text: `Maybe not. Your zone is ${zone}, colder than this plant's zone ${sp.hardy_to_zone} limit.` };
+}
+
+// ---------- Field journal: watercolor at-a-glance notes ----------
+// Art in site/art/ is hand-painted-style watercolor (generated for the Library), transparent PNG.
+const FORM_ART = { grass: "grass", sedge: "sedge", wildflower: "wildflower", shrub: "shrub", "cactus-yucca": "cactus" };
+function formArt(sp) {
+  if (sp.scientific?.startsWith("Yucca")) return "yucca";
+  if (sp.type === "shrub" && (sp.traits?.height_ft || 0) >= 9) return "tree";
+  return FORM_ART[sp.type] || "wildflower";
+}
+
+// A watercolor blot tinted to any color (the blot art is used as a mask).
+export function blot(color, size = 34, base = "", extra = "") {
+  const u = `url(${base}art/blot.webp)`;
+  if (color === FLOWER.White) {  // white wash: no texture (it would read as gray), faint ink edge instead
+    return `<span class="wc-blot white" style="width:${size}px;height:${size}px;background:#fffdf6;-webkit-mask-image:${u};mask-image:${u};${extra}"></span>`;
+  }
+  return `<span class="wc-blot" style="width:${size}px;height:${size}px;background:${u} center/contain no-repeat, ${color};background-blend-mode:multiply;-webkit-mask-image:${u};mask-image:${u};${extra}"></span>`;
+}
+
+export function journalBloom(sp, base = "") {
+  const months = new Set(sp.bloom_months || []);
+  const col = flowerColor(sp);
+  const now = new Date().getMonth() + 1;
+  return `<div class="wc-months" role="img" aria-label="${esc(bloomText(sp))}">${MONTHS.map((m, i) => {
+    const on = months.has(i + 1);
+    return `<span class="wc-month${i + 1 === now ? " now" : ""}">${on ? blot(col, 30, base, `opacity:${0.78 + (i % 3) * 0.07}`) : `<span class="wc-empty"></span>`}<b>${m[0]}</b></span>`;
+  }).join("")}</div>`;
+}
+
+export function journalHeight(sp, base = "") {
+  const ft = sp?.traits?.height_ft;
+  const H = 150; // px for the taller of person (6 ft) and plant
+  const scale = H / Math.max(6, ft || 0);
+  const personH = 6 * scale;
+  const plantH = ft ? Math.max(14, ft * scale) : 0;
+  const art = formArt(sp);
+  const plantW = ["shrub", "cactus", "grass"].includes(art) ? plantH * 1.35 : plantH * 0.62;
+  return `<div class="wc-height" role="img" aria-label="${ft ? `Grows about ${esc(fmtFeet(ft))} tall, shown beside a 6-foot person` : "Height not recorded"}">
+    <div class="wc-stage" style="height:${H + 6}px">
+      <img src="${base}art/person.webp" alt="" style="height:${personH}px">
+      ${ft ? `<img src="${base}art/${art}.webp" alt="" style="height:${plantH}px;max-width:${Math.max(plantW, 30)}px">` : `<span class="wc-note">not recorded</span>`}
+    </div>
+    <svg class="wc-ground" viewBox="0 0 200 6" preserveAspectRatio="none" aria-hidden="true"><path d="M2 3 C 40 1.5, 80 4.5, 120 2.8 S 180 2, 198 3.4" stroke="#5b4630" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg>
+    <div class="wc-scale"><span>6 ft</span>${ft ? `<span>${esc(fmtFeet(ft))}</span>` : ""}</div>
+  </div>`;
+}
+
+export function journalGlance(sp, base = "") {
+  const t = sp.traits || {};
+  const [sun, sunD] = sunText(sp);
+  const [water, waterD] = waterText(sp);
+  const drought = (t.drought_tolerance || "").toLowerCase();
+  const drops = drought === "high" ? 1 : drought === "medium" ? 2 : (drought === "low" || drought === "none") ? 3 : 1;
+  const dropsHtml = [1, 2, 3].map((i) => `<img src="${base}art/drop.webp" alt="" class="${i <= drops ? "" : "faint"}">`).join("");
+  return `<section class="journal" aria-label="At a glance">
+    <div class="journal-head"><span class="jh-title">Field notes</span><span class="jh-sci">${esc(sp.scientific)}</span></div>
+    <div class="jn jn-bloom"><span class="jl">In bloom</span>${journalBloom(sp, base)}<span class="jd">${esc(bloomText(sp))}</span></div>
+    <div class="jn jn-height"><span class="jl">Height</span>${journalHeight(sp, base)}</div>
+    <div class="jn"><span class="jl">Light</span><img class="jart" src="${base}art/${sunArt(sp)}.webp" alt=""><span class="jv">${esc(sun)}</span><span class="jd">${esc(sunD)}</span></div>
+    <div class="jn"><span class="jl">Water</span><span class="jdrops">${dropsHtml}</span><span class="jv">${esc(water)}</span><span class="jd">${esc(waterD)}</span></div>
+    <div class="jn"><span class="jl">Winter</span><img class="jart" src="${base}art/snow.webp" alt=""><span class="jv">${sp.hardy_to_zone ? "Zone " + esc(sp.hardy_to_zone) : "Very hardy"}</span><span class="jd">${t.min_temp_f != null ? `Survives about ${t.min_temp_f}°F` : "Grows wild in western North Dakota"}</span></div>
+    ${t.flower_color ? `<div class="jn"><span class="jl">Flower</span>${blot(flowerColor(sp), 64, base)}<span class="jv">${esc(t.flower_color)}</span></div>` : ""}
+  </section>`;
 }

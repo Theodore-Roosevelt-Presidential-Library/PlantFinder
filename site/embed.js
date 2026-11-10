@@ -4,7 +4,7 @@
 //   <trpl-plant-grid area="roof-northwest" limit="8"></trpl-plant-grid>
 //   <trpl-bloom-now limit="6"></trpl-bloom-now>
 //   <trpl-zone-check></trpl-zone-check>
-import { TYPES, MONTH_NAMES, esc, flowerColor, heroImage, bloomRibbon, bloomText, silhouette, typeIcon, zoneNum, lookupZone } from "./js/viz.js";
+import { TYPES, MONTH_NAMES, esc, flowerColor, heroImage, bloomRibbon, bloomText, silhouette, typeIcon, zoneNum, lookupZone, journalBloom, journalHeight } from "./js/viz.js";
 
 const BASE = new URL(".", import.meta.url).href;
 let dataPromise;
@@ -16,6 +16,7 @@ function data() {
   return dataPromise;
 }
 const src = (img) => (img?.src ? BASE + img.src : img?.url);
+const thumb = (img) => (img?.thumb ? BASE + img.thumb : src(img));
 const link = (sp) => `${BASE}#/plant/${sp.slug}`;
 
 const CSS = `
@@ -37,7 +38,8 @@ a { color: inherit; text-decoration: none; }
 .wide { display: grid; grid-template-columns: 220px 1fr; gap: 16px; background: #fff; border: 1px solid #D9D3C4; border-radius: 10px; overflow: hidden; }
 .wide .pic { aspect-ratio: auto; height: 100%; min-height: 200px; }
 .wide .body { padding: 16px; }
-.facts { display: grid; grid-template-columns: minmax(0, 340px) 110px; gap: 16px; align-items: end; }
+.facts { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 16px; align-items: end; }
+@media (max-width: 700px) { .facts { grid-template-columns: 1fr; } }
 .small { font-family: "Source Sans 3", sans-serif; font-size: .85rem; color: #5D615F; }
 @media (max-width: 560px) { .wide { grid-template-columns: 1fr; } .wide .pic { min-height: 180px; } }
 .zip { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -45,6 +47,20 @@ input { font: inherit; font-family: "Source Sans 3", sans-serif; width: 7.5rem; 
 button { font-family: Oswald, sans-serif; text-transform: uppercase; letter-spacing: .06em; background: #E7805D; color: #fff; border: 0; border-radius: 999px; padding: 9px 16px; cursor: pointer; font-size: 1rem; }
 .box { background: #fff; border: 1px solid #D9D3C4; border-radius: 10px; padding: 16px; }
 .out { margin-top: 10px; font-family: "Source Sans 3", sans-serif; }
+.paper { background: #f3ead6; border-radius: 6px; padding: 10px 12px; color: #3b2f22; font-family: "IM Fell English", serif; --ink: #3b2f22; }
+.wc-blot { display: inline-block; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; mix-blend-mode: multiply; }
+.wc-months { display: grid; grid-template-columns: repeat(12, 1fr); width: 100%; max-width: 560px; gap: 2px; }
+.wc-month { display: grid; justify-items: center; gap: 2px; }
+.wc-month b { font-weight: normal; font-size: .9rem; color: #6d5537; }
+.wc-month.now b { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; color: var(--ink); }
+.wc-empty { width: 30px; height: 30px; border-radius: 50%; border: 1px dashed rgba(109, 85, 55, .32); transform: scale(.55); }
+.wc-height { width: 100%; max-width: 230px; }
+.wc-stage { display: flex; align-items: flex-end; justify-content: space-around; gap: .6rem; }
+.wc-stage img { display: block; object-fit: contain; object-position: bottom; }
+.wc-note { font-style: italic; color: #6d5537; align-self: center; }
+.wc-ground { width: 100%; height: 6px; display: block; margin-top: -2px; }
+.wc-scale { display: flex; justify-content: space-around; font-size: .9rem; color: #6d5537; font-style: italic; }
+
 .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 2px; vertical-align: middle; }
 `;
 
@@ -52,14 +68,14 @@ function fonts() {
   if (document.getElementById("pf-fonts")) return;
   const l = document.createElement("link");
   l.id = "pf-fonts"; l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital@0;1&display=swap";
+  l.href = "https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Oswald:wght@400;600&family=Source+Sans+3:wght@400;600&family=Source+Serif+4:ital@0;1&display=swap";
   document.head.appendChild(l);
 }
 
 function card(sp) {
   const img = heroImage(sp);
   return `<a class="card" href="${link(sp)}" target="_top">
-    <div class="pic">${img ? `<img loading="lazy" alt="" src="${esc(src(img))}" class="${img.kind === "illustration" ? "ill" : ""}">` : typeIcon(sp.type, 48)}</div>
+    <div class="pic">${img ? `<img loading="lazy" alt="" src="${esc(thumb(img))}" class="${img.kind === "illustration" ? "ill" : ""}">` : typeIcon(sp.type, 48)}</div>
     <div class="body"><div class="name">${esc(sp.common)}</div><div class="sci">${esc(sp.scientific)}</div>${bloomRibbon(sp, { width: 180, height: 20 })}</div></a>`;
 }
 
@@ -86,7 +102,7 @@ class PlantCard extends Base {
       <div class="body">
         <div class="name" style="font-size:1.6rem">${esc(sp.common)}</div>
         <div class="sci">${esc(sp.scientific)} · ${esc(TYPES[sp.type]?.one || "")}</div>
-        <div class="facts"><div>${bloomRibbon(sp, { width: 260, height: 28 })}<div class="small">${esc(bloomText(sp))}</div></div><div>${silhouette(sp, { size: 110 })}</div></div>
+        <div class="facts paper"><div>${journalBloom(sp, BASE)}<div style="font-style:italic;margin-top:4px">${esc(bloomText(sp))}</div></div><div>${journalHeight(sp, BASE)}</div></div>
         ${where.length ? `<div class="small">At the Library: ${where.map(esc).join(", ")}</div>` : ""}
         <span class="more">Explore this plant</span>
       </div></a>`);

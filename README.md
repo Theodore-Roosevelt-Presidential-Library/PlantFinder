@@ -28,7 +28,8 @@ been through review:
 Build the published data, then fetch images:
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate   # no packages needed; standard library only
+python3 -m venv .venv && source .venv/bin/activate
+python3 -m pip install pillow          # used to resize images
 python3 scripts/build_species.py     # writes site/data/species.json and plantings.json
 python3 scripts/download_images.py   # saves images to site/img/ and points the data at them
 ```
@@ -41,6 +42,20 @@ Medora), NPSpecies (Theodore Roosevelt National Park checklist), GBIF (range map
 **Image rights:** only public-domain and CC0 images are used. Each image carries its credit,
 license and source, shown wherever it appears. Library photos from the Acquia DAM replace
 these as they are taken.
+
+## Keys and accounts
+
+The site itself needs none: USDA PLANTS, iNaturalist (read), NPSpecies, GBIF and phzmapi.org are open.
+Photo identification (`site/config.js` -> `PLANTFINDER_ID_ENDPOINT`) needs a small server that holds:
+
+| Key | Where | Use |
+|---|---|---|
+| Pl@ntNet API key | my.plantnet.org (free to 500 IDs/day; request the non-profit quota) | Botanical photo ID, limited to North American flora |
+| Gemini API key or Vertex AI service account | Google AI Studio, or the Google Cloud project with the partnership credits | Second opinion limited to the Library's 102 species; plain-language "what to look for" |
+| Hosting | Google Cloud Run (same project) or a Cloudflare Worker | Runs the endpoint and keeps keys out of the browser |
+
+Later: an Acquia DAM API token to pull the Library's own plant photos as they are taken.
+Watercolor art in `site/art/` was generated in Higgsfield for this project; no key is needed to use it.
 
 ## Content rules
 
